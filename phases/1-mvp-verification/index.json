@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "e2e-dry-run",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-12T06:01:29+0900",
+      "completed_at": "2026-05-12T06:05:30+0900",
+      "summary": "287개 아이템 fetch, first-run 분기 작동: 초기화 완료 알림만 송신 (dry-run 모드)"
     },
     {
       "step": 2,
