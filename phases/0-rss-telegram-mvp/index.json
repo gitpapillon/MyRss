@@ -37,7 +37,10 @@
     {
       "step": 4,
       "name": "digest-formatter",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-12T05:57:02+0900",
+      "summary": "digest.ts (소스별 그룹 + 길이 제한 + escape) + digest.test.ts 10 case 통과",
+      "completed_at": "2026-05-12T05:57:43+0900"
     },
     {
       "step": 5,
