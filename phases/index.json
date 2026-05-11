@@ -1,0 +1,6 @@
+{
+  "phases": [
+    { "dir": "0-rss-telegram-mvp", "status": "pending" },
+    { "dir": "1-mvp-verification", "status": "pending" }
+  ]
+}

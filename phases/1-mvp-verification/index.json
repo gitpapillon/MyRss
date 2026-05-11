@@ -1,0 +1,10 @@
+{
+  "project": "rss-telegram",
+  "phase": "verify",
+  "steps": [
+    { "step": 0, "name": "quality-gate", "status": "pending" },
+    { "step": 1, "name": "e2e-dry-run", "status": "pending" },
+    { "step": 2, "name": "e2e-live-and-idempotency", "status": "pending" },
+    { "step": 3, "name": "ci-live-trigger", "status": "pending" }
+  ]
+}
