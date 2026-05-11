@@ -1,17 +1,25 @@
-export interface Article {
+export interface SourceDef {
+  id: string;
+  name: string;
+  url: string;
+}
+
+export interface FetchedItem {
   guid: string;
   source: string;
   title: string;
   summary: string | null;
   link: string;
-  published_at: number;
+  published_at: number; // unix seconds
   fetched_at: number;
-  title_ko: string | null;
-  summary_ko: string | null;
 }
 
-export interface SourceDef {
-  id: string;
-  name: string;
-  url: string;
+export interface TranslatedArticle extends FetchedItem {
+  title_ko: string;
+  summary_ko: string;
+}
+
+export interface SeenStateFile {
+  seen: string[];
+  updated_at: string; // ISO 8601
 }
