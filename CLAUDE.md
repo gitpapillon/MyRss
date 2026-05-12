@@ -34,4 +34,6 @@ npm run test                     # vitest run
 npm run daily                    # tsx scripts/daily.ts (실전 송신)
 npm run daily -- --dry-run       # 변환 결과만 확인, 전송 X
 npm run daily -- --force         # sent.json 무시하고 강제 재송신
+npm run history                  # 등록된 종목 목록 + 일수
+npm run history RKLB             # 특정 종목 타임라인 + 센티먼트 추세
 ```

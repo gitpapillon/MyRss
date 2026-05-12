@@ -7,7 +7,8 @@
     "build": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "daily": "tsx scripts/daily.ts"
+    "daily": "tsx scripts/daily.ts",
+    "history": "tsx scripts/history.ts"
   },
   "devDependencies": {
     "@types/node": "^20",

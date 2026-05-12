@@ -6,10 +6,12 @@ src/lib/
 ├── markdown.ts       # GFM → Telegram MarkdownV2 변환
 ├── splitter.ts       # 4000자 단위 분할
 ├── telegram.ts       # Telegram Bot API sendMessage + MarkdownV2 escape
+├── parser.ts         # briefing MD → 종목별 구조 추출
 └── state.ts          # sent.json 로드/마킹 (날짜별 idempotency)
 
 scripts/
-├── daily.ts          # 일일 orchestration 진입점
+├── daily.ts          # 일일 orchestration 진입점 (송신)
+├── history.ts        # 누적 MD 조회 — 타임라인 + 센티먼트
 ├── execute.py        # harness step executor (Python)
 └── test_execute.py
 
@@ -68,6 +70,18 @@ export async function sendMessage(
 ): Promise<void>;
 // 내부: fetch로 https://api.telegram.org/bot<TOKEN>/sendMessage 호출
 // disable_web_page_preview: true 고정
+```
+
+`src/lib/parser.ts`:
+```typescript
+export interface TickerSection {
+  ticker: string; name: string; close_price?: string;
+  bullish: string[]; bearish: string[]; neutral: string[]; summary?: string;
+}
+export interface BriefingEntry { date: string; tickers: TickerSection[]; }
+export function parseBriefing(content: string, date: string): BriefingEntry;
+// MD 구조 가정: ## <emoji> <TICKER> (<Name>) 헤더 + **🟢 호재** / **🔴 악재** / **⚪ 중립** / **💡 핵심 포인트**
+// "## 🌐 시장 전반" 같이 ticker 없는 섹션은 자동 제외 ([A-Z]+로 시작하는 ticker만 인식)
 ```
 
 `src/lib/state.ts`:
