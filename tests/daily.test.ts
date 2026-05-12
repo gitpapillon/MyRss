@@ -1,6 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { FetchedItem } from "../src/lib/types";
 
+const mkSourceItem = (guid: string, source: string, published_at = 0): FetchedItem => ({
+  guid,
+  source,
+  title: guid,
+  summary: null,
+  link: `https://x/${guid}`,
+  published_at,
+  fetched_at: 0,
+});
+
 const mocks = {
   fetchAllSources: vi.fn(),
   loadSeen: vi.fn(),
@@ -114,6 +124,32 @@ describe("daily orchestrator", () => {
     expect(mocks.buildDigest).toHaveBeenCalledTimes(1);
     expect(mocks.sendMessage).toHaveBeenCalledWith("DIGEST_BODY", { parseMode: "MarkdownV2" });
     expect(mocks.saveSeen).toHaveBeenCalled();
+  });
+
+  it("컷오프 적용: 소스별 5건 초과 신규는 번역 대상에서 제외", async () => {
+    mocks.loadSeen.mockReturnValue(new Set(["old"]));
+    // 소스 A 7건, 소스 B 3건 — 컷오프 후 A는 상위 5건만 통과해야 함
+    const aItems = Array.from({ length: 7 }, (_, i) =>
+      mkSourceItem(`a${i}`, "A", 100 - i)
+    );
+    const bItems = Array.from({ length: 3 }, (_, i) =>
+      mkSourceItem(`b${i}`, "B", 200 - i)
+    );
+    const items = [mkSourceItem("old", "X"), ...aItems, ...bItems];
+    mocks.fetchAllSources.mockResolvedValue({ items, report: [] });
+    mocks.diffNew.mockReturnValue([...aItems, ...bItems]);
+    mocks.translateArticles.mockResolvedValue([]);
+    mocks.buildDigest.mockReturnValue("DIGEST");
+
+    await runDaily([]);
+
+    expect(mocks.translateArticles).toHaveBeenCalledTimes(1);
+    const passed = mocks.translateArticles.mock.calls[0][0] as FetchedItem[];
+    expect(passed).toHaveLength(8); // A 5건 + B 3건
+    const aCount = passed.filter((it) => it.source === "A").length;
+    const bCount = passed.filter((it) => it.source === "B").length;
+    expect(aCount).toBe(5);
+    expect(bCount).toBe(3);
   });
 
   it("dry-run + 신규 N건: 송신 X, stdout 출력 O, seen 갱신 X 아님 — 저장은 그대로 함", async () => {

@@ -101,12 +101,12 @@ describe("translator", () => {
     await expect(translateArticles([item("g1", "T")])).rejects.toThrow(/No JSON array/);
   });
 
-  it("system 메시지에 cache_control 포함 (prompt caching)", async () => {
+  it("올바른 모델과 system 프롬프트로 호출", async () => {
     mockCreate.mockResolvedValueOnce(textBlock('[{"guid":"g1","title_ko":"x","summary_ko":""}]'));
     await translateArticles([item("g1", "T")]);
     const call = mockCreate.mock.calls[0][0];
     expect(call.model).toBe("claude-haiku-4-5-20251001");
-    expect(Array.isArray(call.system)).toBe(true);
-    expect(call.system[0].cache_control).toEqual({ type: "ephemeral" });
+    expect(typeof call.system).toBe("string");
+    expect(call.system).toContain("한국어로 번역");
   });
 });

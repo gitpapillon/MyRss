@@ -58,13 +58,7 @@ async function callOnce(items: ChunkInput[]): Promise<ChunkOutput[]> {
   const response = await getClient().messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
+    system: SYSTEM_PROMPT,
     messages: [
       {
         role: "user",

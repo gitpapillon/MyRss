@@ -4,6 +4,7 @@ import { loadSeen, saveSeen, diffNew } from "../src/lib/state";
 import { translateArticles } from "../src/lib/translator";
 import { buildDigest } from "../src/lib/digest";
 import { sendMessage } from "../src/lib/telegram";
+import { topKPerSource, TOP_K_PER_SOURCE } from "../src/lib/cutoff";
 
 const FIRST_RUN_MESSAGE = "🟢 RSS 봇 초기화 완료. 다음 실행부터 다이제스트가 도착합니다.";
 
@@ -45,8 +46,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`[daily] translating ${newItems.length} items...`);
-  const translated = await translateArticles(newItems);
+  const toTranslate = topKPerSource(newItems, TOP_K_PER_SOURCE);
+  console.log(`[daily] translating ${toTranslate.length}/${newItems.length} items (top-${TOP_K_PER_SOURCE}/source)...`);
+  const translated = await translateArticles(toTranslate);
 
   const digest = buildDigest(translated);
   console.log(`[daily] digest length: ${digest.length} chars`);
