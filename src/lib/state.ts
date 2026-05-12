@@ -23,7 +23,13 @@ export function saveSeen(guids: Iterable<string>): void {
     seen: uniqueGuids,
     updated_at: new Date().toISOString(),
   };
-  fs.writeFileSync(STATE_FILE, JSON.stringify(stateFile, null, 2));
+  try {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(stateFile, null, 2));
+    console.log(`[state] saved ${uniqueGuids.length} guids to ${STATE_FILE}`);
+  } catch (e) {
+    console.error(`[state] failed to write: ${e instanceof Error ? e.message : String(e)}`);
+    throw e;
+  }
 }
 
 export function diffNew(items: FetchedItem[], seen: Set<string>): FetchedItem[] {

@@ -1,4 +1,25 @@
 #!/usr/bin/env tsx
+import { readFileSync } from "fs";
+import { join } from "path";
+
+try {
+  const envPath = join(process.cwd(), ".env");
+  const envContent = readFileSync(envPath, "utf-8");
+  envContent.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const eqIndex = trimmed.indexOf("=");
+      if (eqIndex > 0) {
+        const key = trimmed.substring(0, eqIndex).trim();
+        const value = trimmed.substring(eqIndex + 1).trim();
+        process.env[key] = value;
+      }
+    }
+  });
+} catch (e) {
+  // .env 파일이 없거나 읽을 수 없는 경우 무시
+}
+
 import { fetchAllSources } from "../src/lib/feeds";
 import { loadSeen, saveSeen, diffNew } from "../src/lib/state";
 import { translateArticles } from "../src/lib/translator";
@@ -27,10 +48,14 @@ async function main(): Promise<void> {
   }
 
   if (isFirstRun) {
-    if (dryRun) {
-      console.log(`[daily] (dry-run) FIRST-RUN: would send: ${FIRST_RUN_MESSAGE}`);
+    if (!dryRun) {
+      try {
+        await sendMessage(FIRST_RUN_MESSAGE);
+      } catch (e) {
+        console.warn(`[daily] first-run: failed to send init message: ${e instanceof Error ? e.message : String(e)}`);
+      }
     } else {
-      await sendMessage(FIRST_RUN_MESSAGE);
+      console.log(`[daily] (dry-run) FIRST-RUN: would send: ${FIRST_RUN_MESSAGE}`);
     }
     saveSeen(items.map((i) => i.guid));
     console.log(`[daily] first-run init: marked ${items.length} items as seen`);
