@@ -21,15 +21,17 @@
     {
       "step": 2,
       "name": "e2e-live-and-idempotency",
-      "status": "error",
-      "started_at": "2026-05-12T21:09:46+0900",
-      "error_message": "[3회 시도 후 실패] Step did not update status",
-      "failed_at": "2026-05-12T21:10:24+0900"
+      "status": "completed",
+      "started_at": "2026-05-12T22:03:54+0900",
+      "completed_at": "2026-05-12T22:25:00+0900",
+      "summary": "실전 송신 확인 (사용자 \"뉴스받음\"). state/seen.json 정상 영속화 (283 guids, 22:18:27Z). 2차 실행은 일시적 Telegram fetch 오류로 중단되었으나 재시도 후 정상 송신 + 상태 저장 완료."
     },
     {
       "step": 3,
       "name": "ci-live-trigger",
-      "status": "pending"
+      "status": "blocked",
+      "started_at": "2026-05-12T22:20:43+0900",
+      "blocked_reason": "gh CLI가 미설치되어 있습니다. https://cli.github.com/ 에서 설치한 후 `gh auth login`으로 인증하고, step 3을 다시 실행하세요."
     }
   ],
   "created_at": "2026-05-12T06:00:17+0900"
