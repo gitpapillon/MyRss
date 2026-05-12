@@ -21,10 +21,10 @@
     {
       "step": 2,
       "name": "e2e-live-and-idempotency",
-      "status": "blocked",
-      "started_at": "2026-05-12T06:06:10+0900",
-      "blocked_at": "2026-05-12T06:14:00+0900",
-      "blocked_reason": "Telegram API fetch 실패: 네트워크 또는 인증 문제. 실행 환경에서 https://api.telegram.org/bot<TOKEN>/sendMessage에 연결할 수 있는지 확인하고, 환경변수 TELEGRAM_CHAT_ID가 올바른 정수 형식(현재: 8278525867)인지 검증한 후 'npm run daily'를 재시도하세요. 성공 시 index.json의 status를 'completed'로 변경하고 blocked_reason을 삭제한 뒤 execute.py를 재실행하세요."
+      "status": "error",
+      "started_at": "2026-05-12T21:09:46+0900",
+      "error_message": "[3회 시도 후 실패] Step did not update status",
+      "failed_at": "2026-05-12T21:10:24+0900"
     },
     {
       "step": 3,
