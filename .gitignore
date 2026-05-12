@@ -29,3 +29,7 @@ phases/*/idempotency.log
 phases/*/secrets.log
 phases/*/run.json
 phases/*/log.txt
+
+# daily briefings — Claude Code 데스크톱이 매일 생성하는 입력 MD (commit 불요)
+files/*.md
+!files/.gitkeep

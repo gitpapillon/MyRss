@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
-import { readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 try {
   const envPath = join(process.cwd(), ".env");
@@ -8,87 +8,74 @@ try {
   envContent.split("\n").forEach((line) => {
     const trimmed = line.trim();
     if (trimmed && !trimmed.startsWith("#")) {
-      const eqIndex = trimmed.indexOf("=");
-      if (eqIndex > 0) {
-        const key = trimmed.substring(0, eqIndex).trim();
-        const value = trimmed.substring(eqIndex + 1).trim();
-        process.env[key] = value;
+      const eq = trimmed.indexOf("=");
+      if (eq > 0) {
+        const k = trimmed.substring(0, eq).trim();
+        const v = trimmed.substring(eq + 1).trim();
+        process.env[k] = v;
       }
     }
   });
-} catch (e) {
-  // .env 파일이 없거나 읽을 수 없는 경우 무시
+} catch {
+  // .env 없으면 무시
 }
 
-import { fetchAllSources } from "../src/lib/feeds";
-import { loadSeen, saveSeen, diffNew } from "../src/lib/state";
-import { translateArticles } from "../src/lib/translator";
-import { buildDigest } from "../src/lib/digest";
+import { gfmToMd2 } from "../src/lib/markdown";
+import { splitMessage } from "../src/lib/splitter";
 import { sendMessage } from "../src/lib/telegram";
-import { topKPerSource, TOP_K_PER_SOURCE } from "../src/lib/cutoff";
+import { hasSent, markSent } from "../src/lib/state";
 
-const FIRST_RUN_MESSAGE = "🟢 RSS 봇 초기화 완료. 다음 실행부터 다이제스트가 도착합니다.";
+const FILES_DIR = "files";
 
-function isDryRun(): boolean {
-  return process.argv.slice(2).includes("--dry-run");
+function todayKst(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
 }
 
 async function main(): Promise<void> {
-  const dryRun = isDryRun();
-  console.log(`[daily] start (dry-run=${dryRun})`);
+  const argv = process.argv.slice(2);
+  const dryRun = argv.includes("--dry-run");
+  const force = argv.includes("--force");
 
-  const seen = loadSeen();
-  const isFirstRun = seen.size === 0;
-  console.log(`[daily] seen=${seen.size} (first-run=${isFirstRun})`);
+  const date = todayKst();
+  const briefingPath = join(process.cwd(), FILES_DIR, `briefing_${date}.md`);
+  console.log(`[daily] start (date=${date} dry-run=${dryRun} force=${force})`);
 
-  const { items, report } = await fetchAllSources();
-  console.log(`[daily] fetched ${items.length} items from ${report.length} sources`);
-  for (const r of report) {
-    if (!r.ok) console.warn(`[daily] source failed: ${r.source} (${r.error ?? "unknown"})`);
+  if (!existsSync(briefingPath)) {
+    console.error(`[daily] briefing not found: ${briefingPath}`);
+    process.exit(1);
   }
 
-  if (isFirstRun) {
-    if (!dryRun) {
-      try {
-        await sendMessage(FIRST_RUN_MESSAGE);
-      } catch (e) {
-        console.warn(`[daily] first-run: failed to send init message: ${e instanceof Error ? e.message : String(e)}`);
-      }
-    } else {
-      console.log(`[daily] (dry-run) FIRST-RUN: would send: ${FIRST_RUN_MESSAGE}`);
-    }
-    saveSeen(items.map((i) => i.guid));
-    console.log(`[daily] first-run init: marked ${items.length} items as seen`);
+  if (!force && hasSent(date)) {
+    console.log(`[daily] already sent for ${date}. Use --force to resend.`);
     return;
   }
 
-  const newItems = diffNew(items, seen);
-  console.log(`[daily] new items: ${newItems.length}`);
-
-  if (newItems.length === 0) {
-    console.log("[daily] no new items. skipping send.");
-    saveSeen([...seen, ...items.map((i) => i.guid)]);
-    return;
-  }
-
-  const toTranslate = topKPerSource(newItems, TOP_K_PER_SOURCE);
-  console.log(`[daily] translating ${toTranslate.length}/${newItems.length} items (top-${TOP_K_PER_SOURCE}/source)...`);
-  const translated = await translateArticles(toTranslate);
-
-  const digest = buildDigest(translated);
-  console.log(`[daily] digest length: ${digest.length} chars`);
+  const md = readFileSync(briefingPath, "utf-8");
+  const converted = gfmToMd2(md);
+  const chunks = splitMessage(converted);
+  console.log(`[daily] converted: ${converted.length} chars → ${chunks.length} chunk(s)`);
 
   if (dryRun) {
-    console.log("\n=== DIGEST (dry-run) ===\n");
-    console.log(digest);
-    console.log("\n=== END ===\n");
-  } else {
-    await sendMessage(digest, { parseMode: "MarkdownV2" });
-    console.log("[daily] digest sent.");
+    chunks.forEach((c, i) => {
+      console.log(`\n=== CHUNK ${i + 1}/${chunks.length} (${c.length} chars) ===\n`);
+      console.log(c);
+    });
+    console.log("\n=== END (dry-run, not sent) ===");
+    return;
   }
 
-  saveSeen([...seen, ...items.map((i) => i.guid)]);
-  console.log("[daily] state saved.");
+  for (let i = 0; i < chunks.length; i++) {
+    console.log(`[daily] sending chunk ${i + 1}/${chunks.length}...`);
+    await sendMessage(chunks[i], { parseMode: "MarkdownV2" });
+  }
+  markSent(date);
+  console.log("[daily] done.");
 }
 
 main().catch((e) => {

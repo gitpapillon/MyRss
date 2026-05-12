@@ -1,37 +1,33 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { FetchedItem, SeenStateFile } from "./types";
 
 const STATE_DIR = path.join(process.cwd(), "state");
-const STATE_FILE = path.join(STATE_DIR, "seen.json");
+const STATE_FILE = path.join(STATE_DIR, "sent.json");
 
-export function loadSeen(): Set<string> {
-  if (!fs.existsSync(STATE_FILE)) {
-    return new Set();
-  }
-  const data = JSON.parse(fs.readFileSync(STATE_FILE, "utf-8")) as SeenStateFile;
-  return new Set(data.seen);
+interface SentStateFile {
+  sent_dates: string[];
+  updated_at: string;
 }
 
-export function saveSeen(guids: Iterable<string>): void {
-  if (!fs.existsSync(STATE_DIR)) {
-    fs.mkdirSync(STATE_DIR, { recursive: true });
-  }
-  const uniqueGuids = Array.from(new Set(guids));
-  uniqueGuids.sort();
-  const stateFile: SeenStateFile = {
-    seen: uniqueGuids,
+function loadAll(): Set<string> {
+  if (!fs.existsSync(STATE_FILE)) return new Set();
+  const raw = fs.readFileSync(STATE_FILE, "utf-8");
+  const data = JSON.parse(raw) as SentStateFile;
+  return new Set(data.sent_dates ?? []);
+}
+
+export function hasSent(date: string): boolean {
+  return loadAll().has(date);
+}
+
+export function markSent(date: string): void {
+  const dates = loadAll();
+  dates.add(date);
+  if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
+  const file: SentStateFile = {
+    sent_dates: [...dates].sort(),
     updated_at: new Date().toISOString(),
   };
-  try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(stateFile, null, 2));
-    console.log(`[state] saved ${uniqueGuids.length} guids to ${STATE_FILE}`);
-  } catch (e) {
-    console.error(`[state] failed to write: ${e instanceof Error ? e.message : String(e)}`);
-    throw e;
-  }
-}
-
-export function diffNew(items: FetchedItem[], seen: Set<string>): FetchedItem[] {
-  return items.filter((item) => !seen.has(item.guid));
+  fs.writeFileSync(STATE_FILE, JSON.stringify(file, null, 2));
+  console.log(`[state] marked ${date} as sent (total ${file.sent_dates.length})`);
 }
