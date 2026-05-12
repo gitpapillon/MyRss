@@ -7,7 +7,8 @@
     },
     {
       "dir": "1-mvp-verification",
-      "status": "pending"
+      "status": "blocked",
+      "blocked_at": "2026-05-12T06:11:05+0900"
     }
   ]
 }
