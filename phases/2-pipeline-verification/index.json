@@ -23,7 +23,7 @@
       "name": "parser-v4",
       "status": "completed",
       "started_at": "2026-05-15T22:14:07+0900",
-      "completed_at": "2026-05-15T22:14:45+0900",
+      "completed_at": "2026-05-15T22:15:28+0900",
       "summary": "v4 파서 검증 완료: 단위 테스트 15개 통과 | 실제 briefing 파일(2026-05-15) 3개 종목(RKLB/NBIS/NVDA) 파싱 성공 | history CLI 정상 작동(종료 코드 0)"
     },
     {
