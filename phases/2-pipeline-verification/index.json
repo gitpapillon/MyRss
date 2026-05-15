@@ -29,7 +29,9 @@
     {
       "step": 3,
       "name": "e2e-dry-and-send",
-      "status": "pending"
+      "status": "blocked",
+      "started_at": "2026-05-15T22:15:30+0900",
+      "blocked_reason": "오늘자 files/briefing_2026-05-15.md 가 없음. Claude/Cowork로 먼저 생성한 뒤 step 3을 pending으로 바꿔 재실행하라. (news_2026-05-15.json은 step 1에서 생성되었으므로 분석 가능)"
     }
   ],
   "created_at": "2026-05-15T22:11:28+0900"
