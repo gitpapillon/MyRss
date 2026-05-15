@@ -13,13 +13,25 @@ export interface BriefingEntry {
   tickers: TickerSection[];
 }
 
-const TICKER_HEADER = /^##\s+\S+\s+([A-Z][A-Z0-9.\-]*)\s+\(([^)]+)\)\s*$/;
-const SENTIMENT_BULLISH = /^\*\*🟢\s*호재\*\*\s*$/;
-const SENTIMENT_BEARISH = /^\*\*🔴\s*악재\*\*\s*$/;
-const SENTIMENT_NEUTRAL = /^\*\*⚪\s*중립.*\*\*\s*$/;
-const SUMMARY_LINE = /^\*\*💡\s*핵심 포인트\*\*:\s*(.+)$/;
-const CLOSE_PRICE = /^\*\*전일 종가\*\*:\s*(.+)$/;
-const BULLET = /^-\s+(.+)$/;
+// v3 legacy: `## 🚀 RKLB (Rocket Lab)`
+const TICKER_HEADER_V3 = /^##\s+\S+\s+([A-Z][A-Z0-9.\-]*)\s+\(([^)]+)\)\s*$/;
+// v4: `## 🚀 RKLB — Rocket Lab` (em-dash, en-dash, or hyphen)
+const TICKER_HEADER_V4 = /^##\s+\S+\s+([A-Z][A-Z0-9.\-]*)\s+[—–-]\s+(.+?)\s*$/;
+
+// Old: `**🟢 호재**` / v4: `🟢 **호재**`
+const SENTIMENT_BULLISH = /^(?:\*\*🟢\s*호재\*\*|🟢\s*\*\*호재\*\*)\s*$/;
+const SENTIMENT_BEARISH = /^(?:\*\*🔴\s*악재\*\*|🔴\s*\*\*악재\*\*)\s*$/;
+const SENTIMENT_NEUTRAL = /^(?:\*\*⚪\s*중립.*?\*\*|⚪\s*\*\*중립.*?\*\*)\s*$/;
+
+// Old: `**💡 핵심 포인트**: ...` / v4: `💡 **한줄**: ...`
+const SUMMARY_LINE = /^(?:\*\*💡\s*(?:핵심 포인트|한줄)\*\*|💡\s*\*\*(?:핵심 포인트|한줄)\*\*):\s*(.+)$/;
+
+// Old: `**전일 종가**: $XXX` / v4: `**$XXX (±Y%)** · 진단: ...`
+const CLOSE_PRICE_V3 = /^\*\*전일 종가\*\*:\s*(.+)$/;
+const CLOSE_PRICE_V4 = /^\*\*(\$[^*]+)\*\*\s*·/;
+
+// Old: `- text` / v4: `1. text`, `2. text`, ...
+const BULLET = /^(?:[-*]|\d+\.)\s+(.+)$/;
 
 export function parseBriefing(content: string, date: string): BriefingEntry {
   const lines = content.split("\n");
@@ -32,12 +44,12 @@ export function parseBriefing(content: string, date: string): BriefingEntry {
   for (const raw of lines) {
     const line = raw.trim();
 
-    const header = TICKER_HEADER.exec(line);
+    const header = TICKER_HEADER_V3.exec(line) ?? TICKER_HEADER_V4.exec(line);
     if (header) {
       if (current) tickers.push(current);
       current = {
         ticker: header[1],
-        name: header[2],
+        name: header[2].trim(),
         bullish: [],
         bearish: [],
         neutral: [],
@@ -68,10 +80,17 @@ export function parseBriefing(content: string, date: string): BriefingEntry {
       continue;
     }
 
-    const cp = CLOSE_PRICE.exec(line);
-    if (cp) {
-      current.close_price = cp[1].trim();
+    const cpV3 = CLOSE_PRICE_V3.exec(line);
+    if (cpV3) {
+      current.close_price = cpV3[1].trim();
       continue;
+    }
+    if (!current.close_price) {
+      const cpV4 = CLOSE_PRICE_V4.exec(line);
+      if (cpV4) {
+        current.close_price = cpV4[1].trim();
+        continue;
+      }
     }
 
     const bullet = BULLET.exec(line);
