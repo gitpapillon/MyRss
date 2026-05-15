@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "collect-live",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-05-15T22:12:54+0900",
+      "completed_at": "2026-05-15T22:14:30+0900",
+      "summary": "수집 완료: feeds 21/24 성공(SEC EDGAR 3개 실패) | RKLB 14건 NBIS 46건 NVDA 93건 | 광통신 3건 데이터센터 0건 | 파일: news_2026-05-15.json (gitignore 정상)"
     },
     {
       "step": 2,
