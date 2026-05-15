@@ -7,9 +7,12 @@
     },
     {
       "dir": "1-mvp-verification",
-      "status": "blocked",
-      "blocked_at": "2026-05-12T22:21:14+0900",
-      "failed_at": "2026-05-12T21:10:25+0900"
+      "status": "completed",
+      "note": "obsolete — pivot 이전 RSS+translate 아키텍처 검증. skip 처리. 2-pipeline-verification으로 대체."
+    },
+    {
+      "dir": "2-pipeline-verification",
+      "status": "pending"
     }
   ]
 }

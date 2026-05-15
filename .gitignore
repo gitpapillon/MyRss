@@ -23,6 +23,7 @@ yarn-error.log*
 /coverage
 
 # harness generated outputs (not source of truth)
+.claude/worktrees/
 phases/*/preview.txt
 phases/*/step*-output.json
 phases/*/idempotency.log

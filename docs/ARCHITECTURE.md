@@ -3,20 +3,24 @@
 ## 디렉토리 구조
 ```
 src/lib/
+├── feeds.ts          # 무의존 RSS2.0/Atom fetch + 파서 (수집용)
 ├── markdown.ts       # GFM → Telegram MarkdownV2 변환
 ├── splitter.ts       # 4000자 단위 분할
 ├── telegram.ts       # Telegram Bot API sendMessage + MarkdownV2 escape
-├── parser.ts         # briefing MD → 종목별 구조 추출
+├── parser.ts         # briefing MD → 종목별 구조 추출 (v3+v4)
 └── state.ts          # sent.json 로드/마킹 (날짜별 idempotency)
 
 scripts/
+├── collect-news.ts   # RSS 수집 orchestration → news 풀 작성
 ├── daily.ts          # 일일 orchestration 진입점 (송신)
 ├── history.ts        # 누적 MD 조회 — 타임라인 + 센티먼트
 ├── execute.py        # harness step executor (Python)
 └── test_execute.py
 
-files/                # 입력 MD (Claude Code 데스크톱이 매일 작성)
-└── briefing_YYYY-MM-DD.md
+files/
+├── config/watchlist.json     # tickers[] + sectors[] 추적 항목 (사용자 관리)
+├── news_YYYY-MM-DD.json       # collect 산출 원시 뉴스풀 (gitignore)
+└── briefing_YYYY-MM-DD.md     # 입력 MD (Claude/Cowork가 뉴스풀 분석해 작성, gitignore)
 
 tests/                # vitest 단위 테스트
 state/sent.json       # 송신 완료 날짜 집합
@@ -27,7 +31,17 @@ phases/               # task별 step 실행 메타데이터
 
 ## 데이터 흐름
 ```
-Windows 작업 스케줄러 (07:15 KST)
+[수집] Windows 작업 스케줄러 (07:00 KST)
+  → wsl npm run collect
+    → files/config/watchlist.json 로드 (tickers[] + sectors[])
+    → 10개 해외 RSS fetch (src/lib/feeds.ts) → 24h 필터 + 중복제거
+    → files/news_<today>.json 작성 { date, feeds, market[], tickers[], sectors[] }
+
+[분석] Claude Code / Cowork
+  → files/news_<today>.json 읽기 (WebSearch 아님)
+  → 호재/악재·진단 분석 → files/briefing_<today>.md (v4 템플릿) 작성
+
+[송신] Windows 작업 스케줄러 (07:15 KST)
   → wsl npm run daily
     → today = Asia/Seoul YYYY-MM-DD
     → files/briefing_<today>.md 존재 확인 (없으면 exit 1)
@@ -80,8 +94,26 @@ export interface TickerSection {
 }
 export interface BriefingEntry { date: string; tickers: TickerSection[]; }
 export function parseBriefing(content: string, date: string): BriefingEntry;
-// MD 구조 가정: ## <emoji> <TICKER> (<Name>) 헤더 + **🟢 호재** / **🔴 악재** / **⚪ 중립** / **💡 핵심 포인트**
-// "## 🌐 시장 전반" 같이 ticker 없는 섹션은 자동 제외 ([A-Z]+로 시작하는 ticker만 인식)
+// v4 (현행): `## <emoji> <TICKER> — <Name>` 헤더 + `🟢 **호재**` / `🔴 **악재**`
+//   + `💡 **한줄**:` + 가격 라인 `**$XXX (±Y%)** · 진단:` → close_price
+//   + 번호 매김 리스트(1./2.) 및 - 불릿 모두 수집
+// v3 (레거시 병행): `## <emoji> <TICKER> (<Name>)` + `**🟢 호재**` + `**💡 핵심 포인트**` + `**전일 종가**`
+// ticker 없는 섹션(`## 🌐 매크로` 등)은 자동 제외 ([A-Z]로 시작하는 ticker만 인식)
+```
+
+`src/lib/feeds.ts`:
+```typescript
+export interface FeedItem {
+  title: string; link: string;
+  published: string | null;   // ISO 8601, 파싱 불가/누락 시 null
+  source: string; summary: string;
+}
+export async function fetchText(url: string): Promise<string>;
+export function parseFeed(xml: string, source: string): FeedItem[];
+export function withinHours(item: FeedItem, hours: number, now?: number): boolean;
+export function dedupe(items: FeedItem[]): FeedItem[];
+// RSS2.0 + Atom 모두 처리. 정규식 기반 무의존 파싱 (rss-parser 금지).
+// fetch는 src/lib에만 — collect-news.ts(orchestration)가 호출.
 ```
 
 `src/lib/state.ts`:
