@@ -7,11 +7,9 @@
     "build": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "daily": "tsx scripts/daily.ts"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.40.0",
-    "rss-parser": "^3.13.0"
+    "daily": "tsx scripts/daily.ts",
+    "history": "tsx scripts/history.ts",
+    "collect": "tsx scripts/collect-news.ts"
   },
   "devDependencies": {
     "@types/node": "^20",

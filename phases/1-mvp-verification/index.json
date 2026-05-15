@@ -2,9 +2,38 @@
   "project": "rss-telegram",
   "phase": "verify",
   "steps": [
-    { "step": 0, "name": "quality-gate", "status": "pending" },
-    { "step": 1, "name": "e2e-dry-run", "status": "pending" },
-    { "step": 2, "name": "e2e-live-and-idempotency", "status": "pending" },
-    { "step": 3, "name": "ci-live-trigger", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "quality-gate",
+      "status": "completed",
+      "started_at": "2026-05-12T06:00:17+0900",
+      "completed_at": "2026-05-12T06:01:28+0900",
+      "summary": "정적 품질 검증 7항목 모두 통과: 디렉토리 구조, 의존성, 시크릿 보안, MarkdownV2 escape, prompt caching, workflow YAML, 빌드·테스트"
+    },
+    {
+      "step": 1,
+      "name": "e2e-dry-run",
+      "status": "completed",
+      "started_at": "2026-05-12T06:01:29+0900",
+      "completed_at": "2026-05-12T06:06:09+0900",
+      "summary": "287개 아이템 fetch, first-run 분기 작동: 초기화 완료 알림만 송신 (dry-run 모드)"
+    },
+    {
+      "step": 2,
+      "name": "e2e-live-and-idempotency",
+      "status": "completed",
+      "started_at": "2026-05-12T22:03:54+0900",
+      "completed_at": "2026-05-12T22:25:00+0900",
+      "summary": "실전 송신 확인 (사용자 \"뉴스받음\"). state/seen.json 정상 영속화 (283 guids, 22:18:27Z). 2차 실행은 일시적 Telegram fetch 오류로 중단되었으나 재시도 후 정상 송신 + 상태 저장 완료."
+    },
+    {
+      "step": 3,
+      "name": "ci-live-trigger",
+      "status": "blocked",
+      "started_at": "2026-05-13T06:40:00+0900",
+      "blocked_reason": "GitHub repo secrets 미등록. `gh secret list`가 빈 배열을 반환. https://github.com/gitpapillon/MyRss/settings/secrets/actions 에서 ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 3종을 등록한 뒤 step 3을 재실행하세요. (추가 주의: origin/master 기본 브랜치에 .github/workflows/daily.yml이 아직 push되지 않았습니다. workflow_dispatch가 `gh workflow list`에 노출되려면 master에 해당 워크플로 파일이 있어야 합니다. 로컬 master는 origin/master보다 4커밋 앞서 있으며 그 커밋들에 워크플로 파일이 포함되어 있으므로, secrets 등록 후 `git push origin master`로 푸시 — 또는 feat-verify를 master로 머지 후 푸시 — 가 필요합니다.)",
+      "blocked_at": "2026-05-13T06:41:30+0900"
+    }
+  ],
+  "created_at": "2026-05-12T06:00:17+0900"
 }
