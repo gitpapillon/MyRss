@@ -12,7 +12,8 @@
     },
     {
       "dir": "2-pipeline-verification",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-05-15T23:40:00+0900"
     }
   ]
 }

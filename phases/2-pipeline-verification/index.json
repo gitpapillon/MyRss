@@ -29,10 +29,12 @@
     {
       "step": 3,
       "name": "e2e-dry-and-send",
-      "status": "blocked",
+      "status": "completed",
       "started_at": "2026-05-15T22:15:30+0900",
-      "blocked_reason": "오늘자 files/briefing_2026-05-15.md 가 없음. Claude/Cowork로 먼저 생성한 뒤 step 3을 pending으로 바꿔 재실행하라. (news_2026-05-15.json은 step 1에서 생성되었으므로 분석 가능)"
+      "completed_at": "2026-05-15T23:40:00+0900",
+      "summary": "dry-run 변환 정상(4163자→2청크, FATAL 0). 실송신: 토큰 갱신(getMe ok:true) 후 2청크 전송 성공(Telegram ok:true, message_id 75/76), 사용자 수신 확인('두개 받았습니다'). sent.json에 2026-05-15 기록. 후속 조치 완료: WSL undici ETIMEDOUT 회피 위해 src/lib/telegram.ts 전송 트랜스포트를 curl(child_process, 무의존)로 교체 → npm run daily 무인 자동화 복구. telegram.test.ts 갱신(child_process mock), 빌드+테스트 63개 통과."
     }
   ],
-  "created_at": "2026-05-15T22:11:28+0900"
+  "created_at": "2026-05-15T22:11:28+0900",
+  "completed_at": "2026-05-15T23:40:00+0900"
 }
