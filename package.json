@@ -8,7 +8,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "daily": "tsx scripts/daily.ts",
-    "history": "tsx scripts/history.ts"
+    "history": "tsx scripts/history.ts",
+    "collect": "tsx scripts/collect-news.ts"
   },
   "devDependencies": {
     "@types/node": "^20",
