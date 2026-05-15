@@ -82,8 +82,9 @@ export async function sendMessage(
   text: string,
   opts?: { parseMode?: "MarkdownV2" | "HTML" },
 ): Promise<void>;
-// 내부: fetch로 https://api.telegram.org/bot<TOKEN>/sendMessage 호출
-// disable_web_page_preview: true 고정
+// 내부: curl(child_process)로 https://api.telegram.org/bot<TOKEN>/sendMessage 호출
+//   (WSL2 undici ETIMEDOUT 회피 — curl은 system 바이너리, npm 의존성 아님)
+// disable_web_page_preview: true 고정. 응답 JSON의 ok=false면 throw (토큰 미노출)
 ```
 
 `src/lib/parser.ts`:
