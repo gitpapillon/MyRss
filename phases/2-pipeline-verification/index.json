@@ -1,0 +1,40 @@
+{
+  "project": "rss-telegram",
+  "phase": "pipeline-verification",
+  "steps": [
+    {
+      "step": 0,
+      "name": "quality-gate",
+      "status": "completed",
+      "started_at": "2026-05-15T22:11:28+0900",
+      "completed_at": "2026-05-15T22:12:51+0900",
+      "summary": "정적 품질 검증: 디렉토리 구조, 의존성, 시크릿 격리, 외부 IO 격리, 빌드+테스트(62개) 모두 통과"
+    },
+    {
+      "step": 1,
+      "name": "collect-live",
+      "status": "completed",
+      "started_at": "2026-05-15T22:12:54+0900",
+      "completed_at": "2026-05-15T22:14:05+0900",
+      "summary": "수집 완료: feeds 21/24 성공(SEC EDGAR 3개 실패) | RKLB 14건 NBIS 46건 NVDA 93건 | 광통신 3건 데이터센터 0건 | 파일: news_2026-05-15.json (gitignore 정상)"
+    },
+    {
+      "step": 2,
+      "name": "parser-v4",
+      "status": "completed",
+      "started_at": "2026-05-15T22:14:07+0900",
+      "completed_at": "2026-05-15T22:15:28+0900",
+      "summary": "v4 파서 검증 완료: 단위 테스트 15개 통과 | 실제 briefing 파일(2026-05-15) 3개 종목(RKLB/NBIS/NVDA) 파싱 성공 | history CLI 정상 작동(종료 코드 0)"
+    },
+    {
+      "step": 3,
+      "name": "e2e-dry-and-send",
+      "status": "completed",
+      "started_at": "2026-05-15T22:15:30+0900",
+      "completed_at": "2026-05-15T23:40:00+0900",
+      "summary": "dry-run 변환 정상(4163자→2청크, FATAL 0). 실송신: 토큰 갱신(getMe ok:true) 후 2청크 전송 성공(Telegram ok:true, message_id 75/76), 사용자 수신 확인('두개 받았습니다'). sent.json에 2026-05-15 기록. 후속 조치 완료: WSL undici ETIMEDOUT 회피 위해 src/lib/telegram.ts 전송 트랜스포트를 curl(child_process, 무의존)로 교체 → npm run daily 무인 자동화 복구. telegram.test.ts 갱신(child_process mock), 빌드+테스트 63개 통과."
+    }
+  ],
+  "created_at": "2026-05-15T22:11:28+0900",
+  "completed_at": "2026-05-15T23:40:00+0900"
+}

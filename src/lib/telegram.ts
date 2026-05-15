@@ -1,4 +1,7 @@
+import { execFileSync } from "node:child_process";
+
 const BASE_URL = "https://api.telegram.org";
+const TIMEOUT_SEC = 25;
 
 // MarkdownV2 escape 대상 문자: _ * [ ] ( ) ~ ` > # + - = | { } . !
 // 출처: https://core.telegram.org/bots/api#markdownv2-style
@@ -26,14 +29,45 @@ export async function sendMessage(text: string, opts: SendOptions = {}): Promise
   };
   if (opts.parseMode) body.parse_mode = opts.parseMode;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  // Node fetch(undici)가 일부 환경(WSL2)에서 api.telegram.org에 ETIMEDOUT 되는
+  // 문제로 전송은 curl(system 바이너리, npm 의존성 아님)로 처리한다.
+  let stdout: string;
+  try {
+    stdout = execFileSync(
+      "curl",
+      [
+        "-sS",
+        "-X",
+        "POST",
+        "-H",
+        "Content-Type: application/json",
+        "--max-time",
+        String(TIMEOUT_SEC),
+        "--data",
+        JSON.stringify(body),
+        url,
+      ],
+      { encoding: "utf-8", maxBuffer: 1024 * 1024 },
+    );
+  } catch {
+    // 토큰이 포함된 url/명령을 에러 메시지에 절대 넣지 않는다.
+    throw new Error("Telegram sendMessage transport failed (curl)");
+  }
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`Telegram sendMessage failed: ${res.status} ${errText.slice(0, 300)}`);
+  let ok = false;
+  let detail = "";
+  try {
+    const json = JSON.parse(stdout) as {
+      ok?: boolean;
+      error_code?: number;
+      description?: string;
+    };
+    ok = json.ok === true;
+    if (!ok) detail = `${json.error_code ?? ""} ${json.description ?? ""}`.trim();
+  } catch {
+    detail = "non-JSON response";
+  }
+  if (!ok) {
+    throw new Error(`Telegram sendMessage failed: ${detail.slice(0, 300)}`);
   }
 }
