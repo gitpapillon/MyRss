@@ -9,7 +9,8 @@
     "test:watch": "vitest",
     "daily": "tsx scripts/daily.ts",
     "history": "tsx scripts/history.ts",
-    "collect": "tsx scripts/collect-news.ts"
+    "collect": "tsx scripts/collect-news.ts",
+    "brief": "tsx scripts/brief.ts"
   },
   "devDependencies": {
     "@types/node": "^20",
