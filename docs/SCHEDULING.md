@@ -1,5 +1,7 @@
 # 자동 실행 — Windows 작업 스케줄러 (3개 작업, 완전 무인)
 
+> **활성 트리거는 이 문서의 Windows 작업 스케줄러**입니다 (3작업 등록·검증 완료, `scripts/cron-run.sh` 래퍼 경유). 한계: PC가 06시에 꺼져 있으면 그 슬롯은 놓치고 StartWhenAvailable로 다음 부팅+로그온 시 따라잡음(지연 가능). `.github/workflows/daily-brief.yml`(GHA)는 PC-off가 잦으면 쓸 휴면 대안 — master 병합+secret 설정 전엔 비활성. `state/sent.json` idempotent 가드로 두 경로 동시여도 이중 송신 방지.
+
 매일 KST 기준 **3개 작업**이 순차로 동작한다 (의존 순서: collect → brief → daily):
 
 | 시각 | 작업 | 명령 | 산출물 |

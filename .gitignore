@@ -37,3 +37,4 @@ files/*.md
 
 # daily news pool — npm run collect 가 매일 생성하는 원시 RSS 수집물 (commit 불요)
 files/news_*.json
+logs/*.log

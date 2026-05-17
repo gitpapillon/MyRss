@@ -1,0 +1,59 @@
+name: daily-brief
+
+# PC가 06:00 KST에 꺼져 있어 로컬 트리거가 안 맞으므로 GHA를 1차 트리거로 사용.
+# GitHub schedule cron은 best-effort(고부하 시 수십 분 지연·간헐 누락 가능) — 정시성 trade-off 수용됨.
+on:
+  schedule:
+    - cron: "0 21 * * *" # 21:00 UTC = 06:00 KST(익일). cron은 UTC.
+  workflow_dispatch: {} # 수동 복구용 (로컬 npm run 대체)
+
+concurrency:
+  group: daily-brief
+  cancel-in-progress: false
+
+permissions:
+  contents: write # state/sent.json dedup 상태 커밋 백 (러너 일회성)
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      # 프로젝트 deps에는 추가하지 않음 — CI 러너에만 전역 설치 (CLAUDE.md 의존성 규칙 비위배).
+      - name: Install Claude Code CLI
+        run: npm i -g @anthropic-ai/claude-code
+
+      # collect 실패 → news 없음 → brief exit 1 → daily 미실행(쓰레기 송신 방지). set -e로 의도된 체인.
+      - name: collect → brief → daily
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -e
+          npm run collect
+          npm run brief
+          npm run daily
+
+      # daily가 markSent 했을 때만 sent.json 변경됨 → 변경 시에만 커밋(날짜만 담겨 public repo여도 무해).
+      - name: persist dedup state
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain state/sent.json)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/sent.json
+            git commit -m "chore(state): mark sent via GHA [skip ci]"
+            git push
+          else
+            echo "sent.json unchanged — nothing to persist"
+          fi
