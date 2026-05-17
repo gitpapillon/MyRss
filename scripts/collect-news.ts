@@ -12,6 +12,7 @@ import {
   dedupe,
   type FeedItem,
 } from "../src/lib/feeds";
+import { fetchQuotes } from "../src/lib/quotes";
 
 const FILES_DIR = "files";
 const DEFAULT_HOURS = 24;
@@ -178,10 +179,14 @@ async function main(): Promise<void> {
     }
   });
 
+  // 시세(Stooq→Yahoo 폴백) 병렬 조회. 실패 티커는 null → brief 가 "가격 미수집".
+  const quotes = await fetchQuotes(tickers.map((t) => t.ticker));
+
   const market = finalize(byBucket.get("market") ?? [], hours, now);
   const tickerOut = tickers.map((t) => ({
     ticker: t.ticker,
     name: t.name,
+    quote: quotes[t.ticker] ?? null,
     items: finalize(byBucket.get(`t:${t.ticker}`) ?? [], hours, now),
   }));
   const sectorOut = sectors.map((s) => ({
@@ -208,6 +213,16 @@ async function main(): Promise<void> {
       tickerOut.map((t) => `${t.ticker}=${t.items.length}`).join(" ") +
       " " +
       sectorOut.map((s) => `${s.name}=${s.items.length}`).join(" "),
+  );
+  console.log(
+    `[collect] quotes: ` +
+      tickerOut
+        .map((t) =>
+          t.quote
+            ? `${t.ticker}=$${t.quote.price}(${t.quote.changePct >= 0 ? "+" : ""}${t.quote.changePct}%,${t.quote.source})`
+            : `${t.ticker}=미수집`,
+        )
+        .join(" "),
   );
 
   if (dryRun) {
