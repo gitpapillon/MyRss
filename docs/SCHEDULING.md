@@ -1,6 +1,6 @@
 # 자동 실행 — Windows 작업 스케줄러 (4개 작업, 완전 무인)
 
-> **활성 트리거는 이 문서의 Windows 작업 스케줄러**입니다 (collect/brief/daily 3작업 + 06:35 verify 자가검증 통보, `scripts/cron-run.sh` 래퍼 경유). 한계: PC가 06시에 꺼져 있으면 그 슬롯은 놓치고 StartWhenAvailable로 다음 부팅+로그온 시 따라잡음(지연 가능). `.github/workflows/daily-brief.yml`(GHA)는 PC-off가 잦으면 쓸 휴면 대안 — `schedule` 주석·secret 미설정이라 비활성(`workflow_dispatch` 수동만). 활성화: cron 주석 해제 + Secret 3개. `state/sent.json` idempotent 가드로 두 경로 동시여도 이중 송신 방지.
+> **활성 트리거는 이 문서의 Windows 작업 스케줄러**입니다 (collect/brief/daily 3작업 + 06:35 verify 자가검증 통보, `scripts/cron-run.sh` 래퍼 경유). 한계: PC가 06시에 꺼져 있으면 그 슬롯은 놓치고 StartWhenAvailable로 다음 부팅+로그온 시 따라잡음(지연 가능). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성하는 선택지가 있으나 현재 미구현(과거 휴면 워크플로는 제거됨). `state/sent.json` idempotent 가드로 재시도·중복 트리거 시 이중 송신 방지.
 
 매일 KST 기준 **4개 작업**이 순차로 동작한다 (의존 순서: collect → brief → daily → verify):
 

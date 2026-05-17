@@ -1,13 +1,13 @@
 # Briefing-Telegram Daily Sender
 
-매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15 3작업, `scripts/cron-run.sh` 래퍼 경유). `.github/workflows/daily-brief.yml`(GHA)는 PC-off 대비 휴면 대안 — `schedule` 주석·secret 미설정이라 비활성(`workflow_dispatch` 수동만). 활성화: cron 주석 해제 + Secret 3개.
+매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15/06:35 4작업, `scripts/cron-run.sh` 래퍼 경유). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성할 수 있으나 현재 미구현.
 
 ## 기술 스택
 - TypeScript strict mode (`tsc --noEmit`)
 - 런타임: tsx (`tsx scripts/daily.ts`)
 - 외부 라이브러리: **없음** (Telegram Bot API + RSS 피드를 fetch로 호출, RSS/Atom 파서 자체 구현)
 - 테스트: vitest
-- 스케줄러: Windows 작업 스케줄러 활성 (`scripts/cron-run.sh` 래퍼가 nvm+`~/.local/bin` 명시 로드 — Task Scheduler 클린 셸이 .bashrc/.profile 미로드하는 함정 회피). brief는 로컬 OAuth claude(구독분, 추가 과금 0). GHA(`.github/workflows/daily-brief.yml`)는 휴면 대안(`schedule` 주석·secret 미설정).
+- 스케줄러: Windows 작업 스케줄러 활성 (`scripts/cron-run.sh` 래퍼가 nvm+`~/.local/bin` 명시 로드 — Task Scheduler 클린 셸이 .bashrc/.profile 미로드하는 함정 회피). brief는 로컬 OAuth claude(구독분, 추가 과금 0).
 
 ## 아키텍처 규칙
 - CRITICAL: 시크릿(`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)을 코드·테스트·로그·커밋 메시지에 절대 하드코딩 금지. 반드시 `process.env.<KEY>` 경유.
