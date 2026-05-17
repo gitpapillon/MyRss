@@ -39,6 +39,7 @@ files/*.md
 files/news_*.json
 logs/*.log
 
-# dedup 런타임 상태 — 머신 로컬, commit 불요. gitignore 해야 harness/툴의 `git clean -fd`
-# 에 삭제되지 않음(과거 반복 소실 원인). 단일 파일 규칙은 CLAUDE.md 유지.
+# dedup 런타임 상태 — 머신 로컬, commit 불요(logs/news 와 동일 취급).
+# 단일 파일 규칙은 CLAUDE.md 유지. (반복 소실 진짜 원인은 tests/state.test.ts 격리
+# 버그였고 RSS_STATE_DIR 로 수정함 — 이 ignore 는 관례상 별개로 유지.)
 state/sent.json

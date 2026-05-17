@@ -1,14 +1,15 @@
-# 자동 실행 — Windows 작업 스케줄러 (3개 작업, 완전 무인)
+# 자동 실행 — Windows 작업 스케줄러 (4개 작업, 완전 무인)
 
-> **활성 트리거는 이 문서의 Windows 작업 스케줄러**입니다 (3작업 등록·검증 완료, `scripts/cron-run.sh` 래퍼 경유). 한계: PC가 06시에 꺼져 있으면 그 슬롯은 놓치고 StartWhenAvailable로 다음 부팅+로그온 시 따라잡음(지연 가능). `.github/workflows/daily-brief.yml`(GHA)는 PC-off가 잦으면 쓸 휴면 대안 — `schedule` 주석·secret 미설정이라 비활성(`workflow_dispatch` 수동만). 활성화: cron 주석 해제 + Secret 3개. `state/sent.json` idempotent 가드로 두 경로 동시여도 이중 송신 방지.
+> **활성 트리거는 이 문서의 Windows 작업 스케줄러**입니다 (collect/brief/daily 3작업 + 06:35 verify 자가검증 통보, `scripts/cron-run.sh` 래퍼 경유). 한계: PC가 06시에 꺼져 있으면 그 슬롯은 놓치고 StartWhenAvailable로 다음 부팅+로그온 시 따라잡음(지연 가능). `.github/workflows/daily-brief.yml`(GHA)는 PC-off가 잦으면 쓸 휴면 대안 — `schedule` 주석·secret 미설정이라 비활성(`workflow_dispatch` 수동만). 활성화: cron 주석 해제 + Secret 3개. `state/sent.json` idempotent 가드로 두 경로 동시여도 이중 송신 방지.
 
-매일 KST 기준 **3개 작업**이 순차로 동작한다 (의존 순서: collect → brief → daily):
+매일 KST 기준 **4개 작업**이 순차로 동작한다 (의존 순서: collect → brief → daily → verify):
 
 | 시각 | 작업 | 명령 | 산출물 |
 |---|---|---|---|
 | 06:00 | RSS 수집 | `npm run collect` | `files/news_YYYY-MM-DD.json` |
 | 06:05 | 브리핑 자동 작성 | `npm run brief` (헤드리스 claude) | `files/briefing_YYYY-MM-DD.md` |
 | 06:15 | Telegram 송신 | `npm run daily` | 텔레그램 메시지 |
+| 06:35 | 자가검증 통보 | `npm run verify` | PASS/FAIL Telegram 통보 |
 
 - 프로젝트 경로 — WSL: `/mnt/d/Project/ai-make/rss-feed` / Windows: `D:\Project\ai-make\rss-feed`
 - `npm run brief`는 `scripts/brief.ts`가 news풀을 헤드리스 `claude -p`(기본 `claude-sonnet-4-6`, `BRIEF_MODEL` 로 override)로 분석해 v4 브리핑을 작성한다. 검증(헤더+parseBriefing) 실패 시 파일 미작성·exit 1 → daily가 안 보냄(쓰레기 송신 방지). `briefing_<오늘>.md`가 이미 있으면 skip(수동 작성본 보호).
