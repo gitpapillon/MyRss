@@ -1,11 +1,13 @@
 name: daily-brief
 
-# PC가 06:00 KST에 꺼져 있어 로컬 트리거가 안 맞으므로 GHA를 1차 트리거로 사용.
-# GitHub schedule cron은 best-effort(고부하 시 수십 분 지연·간헐 누락 가능) — 정시성 trade-off 수용됨.
+# 휴면 대안: 활성 트리거는 Windows 작업 스케줄러(docs/SCHEDULING.md). PC-off가 잦아지면 활성화.
+# 활성화 절차: ① repo Secrets 에 ANTHROPIC_API_KEY·TELEGRAM_BOT_TOKEN·TELEGRAM_CHAT_ID 등록
+#            ② 아래 schedule 2줄 주석 해제 (21:00 UTC = 06:00 KST 익일, cron은 best-effort).
+# 주의: secret 없이 schedule 켜면 매일 실패·알림 메일 → 반드시 secret 먼저.
 on:
-  schedule:
-    - cron: "0 21 * * *" # 21:00 UTC = 06:00 KST(익일). cron은 UTC.
-  workflow_dispatch: {} # 수동 복구용 (로컬 npm run 대체)
+  # schedule:
+  #   - cron: "0 21 * * *"
+  workflow_dispatch: {} # 수동 트리거 (secret 등록돼 있어야 송신까지 동작)
 
 concurrency:
   group: daily-brief

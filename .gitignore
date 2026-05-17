@@ -38,3 +38,7 @@ files/*.md
 # daily news pool — npm run collect 가 매일 생성하는 원시 RSS 수집물 (commit 불요)
 files/news_*.json
 logs/*.log
+
+# dedup 런타임 상태 — 머신 로컬, commit 불요. gitignore 해야 harness/툴의 `git clean -fd`
+# 에 삭제되지 않음(과거 반복 소실 원인). 단일 파일 규칙은 CLAUDE.md 유지.
+state/sent.json
