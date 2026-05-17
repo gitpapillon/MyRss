@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-16"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>rss-feed: 07:15 KST briefing MD → Telegram 송신 (npm run daily)</Description>
+    <Description>rss-feed: 06:15 KST briefing MD → Telegram 송신 (npm run daily)</Description>
   </RegistrationInfo>
   <Triggers>
     <CalendarTrigger>
-      <StartBoundary>2026-05-17T07:15:00</StartBoundary>
+      <StartBoundary>2026-05-17T06:15:00</StartBoundary>
       <Enabled>true</Enabled>
       <ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
     </CalendarTrigger>
