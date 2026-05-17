@@ -10,7 +10,8 @@
     "daily": "tsx scripts/daily.ts",
     "history": "tsx scripts/history.ts",
     "collect": "tsx scripts/collect-news.ts",
-    "brief": "tsx scripts/brief.ts"
+    "brief": "tsx scripts/brief.ts",
+    "verify": "tsx scripts/verify-daily.ts"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -39,6 +39,8 @@ npm run history RKLB             # 특정 종목 타임라인 + 센티먼트 추
 npm run collect                  # 10개 RSS 피드 수집 → files/news_YYYY-MM-DD.json
 npm run collect -- --dry-run     # 수집 결과 요약만, 파일 미작성
 npm run collect -- --hours 36    # 수집 시간 윈도우 변경 (기본 24h, 주말 보완용)
+npm run verify                   # 오늘 collect/brief/daily 정상완료 자가검증 → PASS/FAIL Telegram 통보
+npm run verify -- --dry          # 검증 결과만 출력, Telegram 미전송
 ```
 
 ## 브리핑 MD 작성 템플릿 (Claude Code 생성 가이드)
