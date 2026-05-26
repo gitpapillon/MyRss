@@ -33,6 +33,28 @@ case "$npm_path" in
     ;;
 esac
 
+# 의존성 가드: Task Scheduler 의 missed-task catch-up 이 collect/brief/daily 를
+# 거의 동시에 트리거할 때 선행 산출물이 아직 없으면 단순 실패하는 함정 회피.
+# 선행 파일이 생길 때까지 폴링하고, 타임아웃되면 exit 75(skip) — verify 가 잡음.
+today="$(TZ=Asia/Seoul date +%F)"
+wait_for() {
+  local path="$1" timeout="$2" waited=0
+  while [ ! -s "$path" ]; do
+    if [ "$waited" -ge "$timeout" ]; then
+      echo "[wrap] SKIP: 선행 산출물 미생성 (${path}) — ${timeout}s 대기 타임아웃." >> "$log"
+      echo "=== [$(ts)] cron-run ${step} exit 75 ===" >> "$log"
+      exit 75
+    fi
+    sleep 5
+    waited=$((waited + 5))
+  done
+  [ "$waited" -gt 0 ] && echo "[wrap] gated: ${path} 등장까지 ${waited}s 대기 후 진행." >> "$log"
+}
+case "$step" in
+  brief) wait_for "files/news_${today}.json" 120 ;;
+  daily) wait_for "files/briefing_${today}.md" 300 ;;
+esac
+
 npm run "$step" >> "$log" 2>&1
 rc=$?
 echo "=== [$(ts)] cron-run ${step} exit ${rc} ===" >> "$log"
