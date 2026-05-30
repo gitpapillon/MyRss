@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { parseYahooChart } from "../src/lib/quotes";
 
-function chart(closes: (number | null)[]) {
+function chart(
+  closes: (number | null)[],
+  meta: Record<string, unknown> = {},
+) {
   return JSON.stringify({
-    chart: { result: [{ indicators: { quote: [{ close: closes }] } }] },
+    chart: { result: [{ meta, indicators: { quote: [{ close: closes }] } }] },
   });
 }
 
@@ -12,6 +15,7 @@ describe("parseYahooChart", () => {
     expect(parseYahooChart(chart([117.35, 117.56, 124.15, 132.55, 124.77]))).toEqual({
       price: 124.77,
       prevClose: 132.55,
+      currency: null,
     });
   });
 
@@ -19,10 +23,31 @@ describe("parseYahooChart", () => {
     expect(parseYahooChart(chart([100, 110, 120, null]))).toEqual({
       price: 120,
       prevClose: 110,
+      currency: null,
     });
   });
 
-  it("유효 종가 2개 미만이면 null", () => {
+  it("meta.currency 가 있으면 그대로 반환", () => {
+    expect(parseYahooChart(chart([100, 110], { currency: "KRW" }))).toEqual({
+      price: 110,
+      prevClose: 100,
+      currency: "KRW",
+    });
+  });
+
+  it("일봉 1개 + meta 가격이면 regularMarketPrice/chartPreviousClose 폴백", () => {
+    expect(
+      parseYahooChart(
+        chart([29345], {
+          regularMarketPrice: 29345,
+          chartPreviousClose: 28240,
+          currency: "KRW",
+        }),
+      ),
+    ).toEqual({ price: 29345, prevClose: 28240, currency: "KRW" });
+  });
+
+  it("일봉 1개인데 meta 가격 없으면 null", () => {
     expect(parseYahooChart(chart([null, 100]))).toBeNull();
   });
 

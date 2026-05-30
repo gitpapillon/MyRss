@@ -40,6 +40,12 @@ function md(iso: string | null): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+// 통화 기호 부착: 원화는 ₩ + 정수(천단위 콤마), 그 외는 $ + 원 수치 그대로.
+function fmtPrice(price: number, currency?: string): string {
+  if (currency === "KRW") return `₩${Math.round(price).toLocaleString("en-US")}`;
+  return `$${price}`;
+}
+
 function compactItems(items: Item[], n: number): string {
   return items
     .slice(0, n)
@@ -59,7 +65,7 @@ function buildPrompt(date: string, pool: any, watchlist: any): string {
       (w: any) => w.ticker === t.ticker,
     );
     const q = t.quote
-      ? `[시세] $${t.quote.price} (${t.quote.changePct >= 0 ? "+" : ""}${t.quote.changePct}% vs 전일종가 $${t.quote.prevClose}) — 출처 ${t.quote.source}`
+      ? `[시세] ${fmtPrice(t.quote.price, t.quote.currency)} (${t.quote.changePct >= 0 ? "+" : ""}${t.quote.changePct}% vs 전일종가 ${fmtPrice(t.quote.prevClose, t.quote.currency)}) — 출처 ${t.quote.source}`
       : `[시세] 미수집`;
     sections.push(
       `### ${wl?.emoji || ""} ${t.ticker} ${t.name} (${t.items.length}건)\n${q}\n` +
@@ -80,7 +86,7 @@ function buildPrompt(date: string, pool: any, watchlist: any): string {
 - 출력은 **오직 마크다운 본문만**. 코드펜스(\`\`\`), 머리말, 설명, 후기 절대 금지.
 - 첫 줄은 정확히: \`# 📈 데일리 브리핑 — ${date} (${weekdayKo(date)})\`
 - 표(| ... |) 사용 금지. 호재/악재 라벨은 이모지를 볼드 밖에: \`🟢 **호재**\` / \`🔴 **악재**\`, 항목은 1./2./3. 번호 매김(강한 시그널이 1번).
-- 종목 헤더: \`## {emoji} {TICKER} — {회사명}\`. 가격 라인: 종목 \`[시세]\`가 주어지면 **그 수치를 그대로** \`**$<price> (±<changePct>%)** · 진단: **<한 단어 진단>**\` 로 출력(시세 숫자 변형·반올림·날조 금지). \`[시세] 미수집\`일 때만 \`**가격 미수집** · 진단: **<진단>**\`.
+- 종목 헤더: \`## {emoji} {TICKER} — {회사명}\`. 가격 라인: 종목 \`[시세]\`가 주어지면 **그 통화 기호(₩ 또는 $)와 수치를 그대로** \`**<price> (±<changePct>%)** · 진단: **<한 단어 진단>**\` 로 출력(통화 기호 변경·숫자 변형·반올림·날조 금지). \`[시세] 미수집\`일 때만 \`**가격 미수집** · 진단: **<진단>**\`.
 - 핵심 수치는 \`**굵게**\`, 출처는 항목 끝에 \`_(소스, M/D)_\` 이탤릭. 종목당 호재+악재 합 4~6개.
 - 진단 라벨 예: 강세("이벤트 드리븐 강세","모멘텀"), 약세("조정·관망","리스크 부각"), 중립("관망","이벤트 대기"), 주의("모멘텀 추격 주의","변동성 확대").
 

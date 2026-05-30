@@ -22,6 +22,9 @@ interface Ticker {
   name: string;
   emoji: string;
   industry: string;
+  // 한국 종목(.KS/.KQ): 미국 소스 대신 한국 구글뉴스로 조회할 검색어.
+  // 레버리지 ETN/ETF는 기초자산명(예: "SK하이닉스")을 넣어 underlying 뉴스를 추적.
+  newsQuery?: string;
 }
 interface Sector {
   name: string;
@@ -43,6 +46,18 @@ interface Task {
 const enc = encodeURIComponent;
 
 function tickerFeeds(t: Ticker): Array<{ source: string; url: string }> {
+  // 한국 종목(.KS/.KQ): SEC EDGAR·Seeking Alpha·StockTitan·Bing(영문) 등 미국
+  // 소스가 무용하므로 한국 Google News 1개로 대체. ETN/ETF는 newsQuery(기초자산명)로
+  // underlying 뉴스를 추적, 없으면 name 사용.
+  if (/\.(KS|KQ)$/i.test(t.ticker)) {
+    const q = t.newsQuery || t.name;
+    return [
+      {
+        source: "Google News",
+        url: `https://news.google.com/rss/search?q=${enc(q)}&hl=ko&gl=KR&ceid=KR:ko`,
+      },
+    ];
+  }
   // dedupe 우선순위: 공식·정제 소스를 앞에, 애그리게이터(Google News)를 뒤에.
   return [
     {
@@ -219,7 +234,7 @@ async function main(): Promise<void> {
       tickerOut
         .map((t) =>
           t.quote
-            ? `${t.ticker}=$${t.quote.price}(${t.quote.changePct >= 0 ? "+" : ""}${t.quote.changePct}%,${t.quote.source})`
+            ? `${t.ticker}=${t.quote.currency === "KRW" ? "₩" : "$"}${t.quote.price}(${t.quote.changePct >= 0 ? "+" : ""}${t.quote.changePct}%,${t.quote.source})`
             : `${t.ticker}=미수집`,
         )
         .join(" "),

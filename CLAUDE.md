@@ -81,12 +81,12 @@ npm run verify -- --dry          # 검증 결과만 출력, Telegram 미전송
 
 ### 입력 데이터 소스
 - `files/config/watchlist.json` — `tickers[]` (보유·관심 종목) + `sectors[]` (산업 트래킹)
-- `files/news_YYYY-MM-DD.json` — `npm run collect`가 생성하는 원시 뉴스풀. Claude Code/Cowork는 WebSearch 대신 **이 파일을 읽어** 호재/악재·진단을 분석해 브리핑 MD를 작성한다. 구조: `{ market[], tickers[{ticker,name,quote,items[]}], sectors[{name,items[]}] }`, 각 item = `{title,source,published,link,summary}`. `quote` = `{price,changePct,prevClose,source,asOf}` 또는 시세 미수집 시 `null`(brief가 "가격 미수집" 출력). `feeds.failed[]`가 비어있지 않으면 일부 소스 누락이므로 참고.
+- `files/news_YYYY-MM-DD.json` — `npm run collect`가 생성하는 원시 뉴스풀. Claude Code/Cowork는 WebSearch 대신 **이 파일을 읽어** 호재/악재·진단을 분석해 브리핑 MD를 작성한다. 구조: `{ market[], tickers[{ticker,name,quote,items[]}], sectors[{name,items[]}] }`, 각 item = `{title,source,published,link,summary}`. `quote` = `{price,changePct,prevClose,currency,source,asOf}`(`currency`는 "USD"/"KRW" 등 — brief가 통화 기호 ₩/$ 결정) 또는 시세 미수집 시 `null`(brief가 "가격 미수집" 출력). `feeds.failed[]`가 비어있지 않으면 일부 소스 누락이므로 참고.
 
 ### 뉴스 수집 파이프라인 (10개 해외 RSS)
-- 종목별(`tickers[]` 순회): SEC EDGAR(8-K) · Yahoo Finance · Seeking Alpha · StockTitan · Bing News · Google News
+- 종목별(`tickers[]` 순회): SEC EDGAR(8-K) · Yahoo Finance · Seeking Alpha · StockTitan · Bing News · Google News. **단 한국 종목(`.KS`/`.KQ` 티커)은 미국 소스가 무용하므로 한국 Google News 1개로 대체** — 레버리지 ETN/ETF는 watchlist의 `newsQuery`(기초자산명, 예 "SK하이닉스")로 underlying 뉴스를 추적.
 - 시장·매크로(1회): CNBC · WSJ · MarketWatch · Investing.com
 - 섹터(`sectors[]` 순회): Google News 한국어 로케일(`{name} 관련주`)
-- 종목 시세(`tickers[]`): Yahoo v8 chart(query1→query2 폴백, 무인증) — 일간 %는 일봉 종가 마지막 2개로 계산. fetch는 `src/lib/quotes.ts`에 격리(순수 파서 단위테스트). Stooq는 무료 CSV가 apikey(캡차) 필요해져 미사용.
+- 종목 시세(`tickers[]`): Yahoo v8 chart(query1→query2 폴백, 무인증) — 일간 %는 일봉 종가 마지막 2개로 계산. 신규 상장 등 일봉이 1개뿐이면 `meta.regularMarketPrice`+`chartPreviousClose`로 폴백. fetch는 `src/lib/quotes.ts`에 격리(순수 파서 단위테스트). Stooq는 무료 CSV가 apikey(캡차) 필요해져 미사용.
 - 24시간 윈도우 필터 + link/title 중복 제거. fetch는 `src/lib/feeds.ts`에 격리, `scripts/collect-news.ts`는 orchestration만.
 

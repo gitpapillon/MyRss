@@ -12,6 +12,8 @@ export interface Quote {
   /** 전일 종가 대비 % (소수 2자리) */
   changePct: number;
   prevClose: number;
+  /** ISO 4217 (예: "USD", "KRW"). meta 누락 시 티커 접미사로 추론. */
+  currency: string;
   source: "yahoo";
   /** 조회 시각 ISO */
   asOf: string;
@@ -27,11 +29,12 @@ function round2(n: number): number {
 
 // --- 순수 파서 (네트워크 없음, 단위테스트 대상) ---
 
-/** Yahoo v8 chart JSON → 일봉 종가 배열의 마지막 2개로 {price, prevClose}.
- *  null 종가(거래중 빈 봉 등)는 제외. 2개 미만이면 null. */
+/** Yahoo v8 chart JSON → 일봉 종가 배열의 마지막 2개로 {price, prevClose, currency}.
+ *  null 종가(거래중 빈 봉 등)는 제외. 2개 미만이면 null.
+ *  currency 는 meta.currency (없으면 null — fetchQuote 에서 티커로 폴백). */
 export function parseYahooChart(
   jsonText: string,
-): { price: number; prevClose: number } | null {
+): { price: number; prevClose: number; currency: string | null } | null {
   let j: any;
   try {
     j = JSON.parse(jsonText);
@@ -40,12 +43,29 @@ export function parseYahooChart(
   }
   const result = j?.chart?.result?.[0];
   if (!result) return null;
+  const currency =
+    typeof result?.meta?.currency === "string" ? result.meta.currency : null;
   const closes: unknown[] = result?.indicators?.quote?.[0]?.close ?? [];
   const vals = closes
     .map((c) => Number(c))
     .filter((n) => Number.isFinite(n) && n > 0);
-  if (vals.length < 2) return null;
-  return { price: vals[vals.length - 1], prevClose: vals[vals.length - 2] };
+  if (vals.length >= 2) {
+    return {
+      price: vals[vals.length - 1],
+      prevClose: vals[vals.length - 2],
+      currency,
+    };
+  }
+  // 신규 상장 등 일봉 1개뿐이면 meta 폴백: 봉이 1개라 chartPreviousClose 가
+  // 곧 직전일 종가 → 일간 % 계산 안전(다일봉일 땐 range 시작값이라 금지).
+  if (vals.length === 1) {
+    const rmp = Number(result?.meta?.regularMarketPrice);
+    const cpc = Number(result?.meta?.chartPreviousClose);
+    if (Number.isFinite(rmp) && rmp > 0 && Number.isFinite(cpc) && cpc > 0) {
+      return { price: rmp, prevClose: cpc, currency };
+    }
+  }
+  return null;
 }
 
 // --- IO ---
@@ -74,11 +94,15 @@ export async function fetchQuote(ticker: string): Promise<Quote | null> {
       const json = await httpGet(`https://${host}${path}`);
       const p = parseYahooChart(json);
       if (p) {
+        // meta.currency 누락 시(일부 한국 ETN 등) 접미사로 추론.
+        const currency =
+          p.currency || (/\.(KS|KQ)$/i.test(ticker) ? "KRW" : "USD");
         return {
           ticker,
           price: round2(p.price),
           prevClose: round2(p.prevClose),
           changePct: round2(((p.price - p.prevClose) / p.prevClose) * 100),
+          currency,
           source: "yahoo",
           asOf: new Date().toISOString(),
         };
