@@ -11,7 +11,7 @@ import { parseBriefing } from "../src/lib/parser";
 const FILES_DIR = "files";
 // 분석 품질이 핵심 → Sonnet 기본 (Haiku는 호재/악재 판단 약함). BRIEF_MODEL로 override.
 const MODEL = process.env.BRIEF_MODEL || "claude-sonnet-4-6";
-const CLAUDE_TIMEOUT_MS = 240_000;
+const CLAUDE_TIMEOUT_MS = Number(process.env.BRIEF_TIMEOUT_MS) || 600_000;
 
 function todayKst(): string {
   return new Intl.DateTimeFormat("en-CA", {
