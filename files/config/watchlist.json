@@ -19,18 +19,6 @@
       "industry": "AI 반도체"
     },
     {
-      "ticker": "INTC",
-      "name": "Intel",
-      "emoji": "💻",
-      "industry": "CPU·파운드리·반도체"
-    },
-    {
-      "ticker": "DRAM",
-      "name": "Roundhill Memory ETF",
-      "emoji": "💾",
-      "industry": "메모리반도체 ETF (삼성·하이닉스·마이크론)"
-    },
-    {
       "ticker": "520101.KS",
       "name": "SK하이닉스 레버리지 ETN",
       "emoji": "📈",
