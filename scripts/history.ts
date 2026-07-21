@@ -30,10 +30,10 @@ function listTickers(all: BriefingEntry[]): void {
     return;
   }
   console.log(`등록 종목 ${map.size}개 / 총 ${all.length}일 데이터:\n`);
-  console.log("ticker  days  name");
-  console.log("------  ----  ----");
+  console.log("ticker      days  name");
+  console.log("----------  ----  ----");
   for (const [tk, info] of [...map.entries()].sort()) {
-    console.log(`${tk.padEnd(6)}  ${String(info.days).padStart(4)}  ${info.name}`);
+    console.log(`${tk.padEnd(10)}  ${String(info.days).padStart(4)}  ${info.name}`);
   }
 }
 

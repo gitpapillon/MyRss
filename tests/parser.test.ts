@@ -173,3 +173,83 @@ describe("parseBriefing v4 (신규 템플릿 호환)", () => {
     expect(result.tickers.length).toBe(2);
   });
 });
+
+const FIXTURE_KR = `# 📈 데일리 브리핑 — 2026-07-22 (수요일)
+
+## 🌐 매크로
+
+- 코스피 반등
+
+## 🚀 RKLB — Rocket Lab USA
+
+**$67.62 (+0.4%)** · 진단: **이벤트 드리븐 강세**
+
+💡 **한줄**: 미국 종목은 기존대로.
+
+## 🛡️ 064350.KS — 현대로템
+
+**₩159,000 (-5.19%)** · 진단: **리스크 부각**
+
+🔴 **악재**
+
+1. 수주 모멘텀 둔화 _(연합뉴스, 7/21)_
+
+💡 **한줄**: 방산 모멘텀 조정 국면.
+
+## 💎 000660.KS — SK하이닉스
+
+**₩1,764,000 (-4.23%)** · 진단: **조정·관망**
+
+🟢 **호재**
+
+1. HBM 공급 계약 확대 _(전자신문, 7/21)_
+
+## 🔭 산업 트래킹
+
+- 전력기기 특이사항 없음
+`;
+
+describe("parseBriefing — 한국 종목 (숫자 티커·₩ 가격)", () => {
+  const result = parseBriefing(FIXTURE_KR, "2026-07-22");
+
+  it("숫자로 시작하는 티커도 인식", () => {
+    expect(result.tickers.map((t) => t.ticker)).toEqual([
+      "RKLB",
+      "064350.KS",
+      "000660.KS",
+    ]);
+  });
+
+  it("한국 종목 회사명 추출", () => {
+    expect(result.tickers[1].name).toBe("현대로템");
+    expect(result.tickers[2].name).toBe("SK하이닉스");
+  });
+
+  it("₩ 가격 라인을 close_price로 추출", () => {
+    expect(result.tickers[1].close_price).toBe("₩159,000 (-5.19%)");
+    expect(result.tickers[2].close_price).toBe("₩1,764,000 (-4.23%)");
+  });
+
+  it("한국 종목 호재·악재·한줄 파싱", () => {
+    expect(result.tickers[1].bearish).toEqual(["수주 모멘텀 둔화 _(연합뉴스, 7/21)_"]);
+    expect(result.tickers[1].summary).toBe("방산 모멘텀 조정 국면.");
+    expect(result.tickers[2].bullish).toEqual(["HBM 공급 계약 확대 _(전자신문, 7/21)_"]);
+  });
+
+  it("한글 섹션 헤더(🌐 매크로·🔭 산업 트래킹)는 티커로 잡지 않음", () => {
+    expect(result.tickers.length).toBe(3);
+  });
+
+  it("티커가 아닌 ## 섹션이 직전 종목을 닫음 (산업 트래킹 불릿 미흡수)", () => {
+    expect(result.tickers[2].bullish).not.toContain("전력기기 특이사항 없음");
+  });
+
+  it("'가격 미수집' 라인은 close_price로 잡지 않음", () => {
+    const md = [
+      "## 🛡️ 064350.KS — 현대로템",
+      "",
+      "**가격 미수집** · 진단: **관망**",
+    ].join("\n");
+    expect(parseBriefing(md, "2026-07-22").tickers[0].close_price).toBeUndefined();
+  });
+});
