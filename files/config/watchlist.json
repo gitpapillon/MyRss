@@ -13,17 +13,18 @@
       "industry": "AI 인프라·클라우드"
     },
     {
-      "ticker": "NVDA",
-      "name": "NVIDIA",
-      "emoji": "💎",
-      "industry": "AI 반도체"
-    },
-    {
       "ticker": "064350.KS",
       "name": "현대로템",
       "emoji": "🛡️",
       "industry": "방산·철도차량 (K2 전차·전동차)",
       "newsQuery": "현대로템"
+    },
+    {
+      "ticker": "000660.KS",
+      "name": "SK하이닉스",
+      "emoji": "💎",
+      "industry": "반도체·HBM·D램",
+      "newsQuery": "SK하이닉스"
     }
   ],
   "sectors": [
