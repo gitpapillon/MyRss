@@ -1,6 +1,6 @@
 # Briefing-Telegram Daily Sender
 
-매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15/06:35 4작업, `scripts/cron-run.sh` 래퍼 경유). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성할 수 있으나 현재 미구현.
+매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. (옵션) 카카오톡 "나에게 보내기"로 200자 요약을 추가 발송한다 — `src/lib/kakao.ts`, daily 단계 통합, 실패해도 Telegram 결과에 영향 없음(best-effort). **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15/06:35 4작업, `scripts/cron-run.sh` 래퍼 경유). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성할 수 있으나 현재 미구현.
 
 ## 기술 스택
 - TypeScript strict mode (`tsc --noEmit`)
@@ -15,6 +15,7 @@
 - CRITICAL: Next.js, tailwind, postcss, better-sqlite3, @google/genai, react, rss-parser, @anthropic-ai/sdk 의존성 신규 추가 금지. RSS/Atom 파싱은 `src/lib/feeds.ts` 무의존 파서 사용 (rss-parser 금지 유지). 뉴스 분석·번역은 Claude Code가 MD 생성 단계에서 흡수.
 - 모든 외부 IO는 `src/lib/` 하위 모듈로 격리한다. `scripts/`는 orchestration만 담당.
 - 입력 MD는 `files/briefing_YYYY-MM-DD.md` 명명 규칙 고정. 파일 1개 = 하루치 브리핑.
+- `src/lib/parser.ts`는 한국 종목(숫자 티커 `064350.KS`·₩ 가격)도 인식한다. 티커 정규식을 좁히지 말 것 — 좁히면 한국 종목이 조용히 누락되고 검증(brief.ts)은 미국 종목만으로 통과해 발견이 늦다.
 
 ## 개발 프로세스
 - CRITICAL: 새로운 lib 모듈 추가 시 vitest 단위 테스트를 함께 작성하고 통과시킨다.
@@ -25,6 +26,8 @@
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot API | `<bot_id>:<bot_secret>` |
 | `TELEGRAM_CHAT_ID` | 수신자 chat_id | 정수 문자열 |
+| `KAKAO_REST_API_KEY` | 카카오 "나에게 보내기" REST API 키 (옵션 — 미설정 시 카카오 발송 skip) | 문자열 |
+| `KAKAO_TOKEN_PATH` | 카카오 refresh token 파일 경로 (시크릿 볼트) | `/mnt/d/_secrets/rss-feed/kakao-token.json` |
 
 ## 명령어
 ```bash
@@ -41,7 +44,10 @@ npm run collect -- --dry-run     # 수집 결과 요약만, 파일 미작성
 npm run collect -- --hours 36    # 수집 시간 윈도우 변경 (기본 24h, 주말 보완용)
 npm run verify                   # 오늘 collect/brief/daily 정상완료 자가검증 → PASS/FAIL Telegram 통보
 npm run verify -- --dry          # 검증 결과만 출력, Telegram 미전송
+npm run kakao:auth               # 카카오 1회 OAuth 인증 → refresh token 저장 + 테스트 발송
 ```
+
+주의: WSL 셸에서 `npm`이 `/mnt/c`(Windows npm)로 잡히면 vitest/tsx 실패 — 실행 전 `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"`로 nvm 로드.
 
 ## 브리핑 MD 작성 템플릿 (Claude Code 생성 가이드)
 
