@@ -53,38 +53,24 @@ describe("buildKakaoSummary", () => {
     expect(out).not.toContain("064350.KS");
   });
 
-  it("헤더는 M/D(요일), linkUrl 미지정 시 꼬리 없음", () => {
+  it("헤더는 M/D(요일), 본문에 링크 없음 (버튼으로 대체)", () => {
     const out = buildKakaoSummary(BRIEFING, "2026-07-20");
     expect(out.startsWith("📈 7/20(월) 브리핑")).toBe(true);
-    expect(out).not.toContain("전문:");
+    expect(out).not.toContain("http");
     expect(out.endsWith("현대로템 ₩159,000 -5.19% 리스크 부각")).toBe(true);
   });
 
-  it("linkUrl 지정 시 마지막 줄에 평문 URL", () => {
-    const out = buildKakaoSummary(BRIEFING, "2026-07-20", "https://t.me/sc_rssfeed_bot");
-    expect(out.endsWith("\n전문: https://t.me/sc_rssfeed_bot")).toBe(true);
-  });
-
-  const many = Array.from({ length: 20 }, (_, i) =>
-    [
-      `## 🚀 TICK${i} — Long Company Name ${i}`,
-      "",
-      `**$${100 + i}.00 (+1.2%)** · 진단: **이벤트 드리븐 강세**`,
-    ].join("\n"),
-  ).join("\n\n");
-
   it("항상 200자 이하 (종목 과다 시 말줄임)", () => {
+    const many = Array.from({ length: 20 }, (_, i) =>
+      [
+        `## 🚀 TICK${i} — Long Company Name ${i}`,
+        "",
+        `**$${100 + i}.00 (+1.2%)** · 진단: **이벤트 드리븐 강세**`,
+      ].join("\n"),
+    ).join("\n\n");
     const out = buildKakaoSummary(many, "2026-07-20");
     expect(out.length).toBeLessThanOrEqual(200);
     expect(out.endsWith("…")).toBe(true);
-  });
-
-  it("잘림이 발생해도 URL은 보존 (본문만 잘라냄)", () => {
-    const url = "https://t.me/sc_rssfeed_bot";
-    const out = buildKakaoSummary(many, "2026-07-20", url);
-    expect(out.length).toBeLessThanOrEqual(200);
-    expect(out.endsWith(`\n전문: ${url}`)).toBe(true);
-    expect(out).toContain("…");
   });
 
   it("가격 미수집 종목은 요약에서 제외", () => {

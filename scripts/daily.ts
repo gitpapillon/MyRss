@@ -85,10 +85,9 @@ async function main(): Promise<void> {
   const kakaoTokenPath = process.env.KAKAO_TOKEN_PATH;
   if (process.env.KAKAO_REST_API_KEY && kakaoTokenPath && existsSync(kakaoTokenPath)) {
     try {
-      const url = `https://t.me/${getBotUsername()}`;
-      // link/button은 t.me 도메인을 카카오 앱에 등록해야 렌더링되므로 URL은 본문에도 넣는다.
-      sendToMe(buildKakaoSummary(md, date, url), refreshAccessToken(), {
-        url,
+      // 버튼 렌더링은 t.me 도메인이 카카오 앱 [제품 링크 관리]에 등록돼 있어야 한다.
+      sendToMe(buildKakaoSummary(md, date), refreshAccessToken(), {
+        url: `https://t.me/${getBotUsername()}`,
         buttonTitle: "텔레그램에서 전문 보기",
       });
       console.log("[daily] kakao summary sent.");
