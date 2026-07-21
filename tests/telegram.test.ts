@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
 import { execFileSync } from "node:child_process";
-import { escapeMarkdownV2, sendMessage } from "../src/lib/telegram";
+import { escapeMarkdownV2, getBotUsername, sendMessage } from "../src/lib/telegram";
 
 const curlMock = vi.mocked(execFileSync);
 
@@ -106,6 +106,53 @@ describe("sendMessage", () => {
       await sendMessage("x");
       throw new Error("should have thrown");
     } catch (e) {
+      expect((e as Error).message).not.toContain("test-token");
+    }
+  });
+});
+
+describe("getBotUsername", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    curlMock.mockReset();
+    process.env.TELEGRAM_BOT_TOKEN = "12345:test-token";
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("getMe 응답에서 username 추출", () => {
+    curlMock.mockReturnValueOnce(
+      '{"ok":true,"result":{"id":1,"username":"sc_rssfeed_bot"}}' as never,
+    );
+    expect(getBotUsername()).toBe("sc_rssfeed_bot");
+    const args = curlMock.mock.calls[0][1] as string[];
+    expect(args[args.length - 1]).toBe(
+      "https://api.telegram.org/bot12345:test-token/getMe",
+    );
+  });
+
+  it("토큰 없으면 throw", () => {
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    expect(() => getBotUsername()).toThrow(/TELEGRAM_BOT_TOKEN/);
+  });
+
+  it("ok:false면 throw", () => {
+    curlMock.mockReturnValueOnce('{"ok":false,"error_code":401}' as never);
+    expect(() => getBotUsername()).toThrow(/no username/);
+  });
+
+  it("curl 실패 시 토큰 비노출 transport 에러", () => {
+    curlMock.mockImplementationOnce(() => {
+      throw new Error("curl exit bot12345:test-token");
+    });
+    try {
+      getBotUsername();
+      throw new Error("should have thrown");
+    } catch (e) {
+      expect((e as Error).message).toMatch(/getMe transport failed/);
       expect((e as Error).message).not.toContain("test-token");
     }
   });

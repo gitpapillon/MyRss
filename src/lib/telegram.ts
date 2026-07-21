@@ -15,6 +15,31 @@ export interface SendOptions {
   parseMode?: "MarkdownV2" | "HTML";
 }
 
+/** getMe로 봇 username 조회 (`https://t.me/<username>` 링크 조립용). */
+export function getBotUsername(): string {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not set");
+
+  let stdout: string;
+  try {
+    stdout = execFileSync(
+      "curl",
+      ["-sS", "--max-time", String(TIMEOUT_SEC), `${BASE_URL}/bot${token}/getMe`],
+      { encoding: "utf-8", maxBuffer: 1024 * 1024 },
+    );
+  } catch {
+    throw new Error("Telegram getMe transport failed (curl)");
+  }
+
+  try {
+    const json = JSON.parse(stdout) as { ok?: boolean; result?: { username?: string } };
+    if (json.ok === true && json.result?.username) return json.result.username;
+  } catch {
+    throw new Error("Telegram getMe non-JSON response");
+  }
+  throw new Error("Telegram getMe failed: no username");
+}
+
 export async function sendMessage(text: string, opts: SendOptions = {}): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

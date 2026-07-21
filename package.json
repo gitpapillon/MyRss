@@ -11,7 +11,8 @@
     "history": "tsx scripts/history.ts",
     "collect": "tsx scripts/collect-news.ts",
     "brief": "tsx scripts/brief.ts",
-    "verify": "tsx scripts/verify-daily.ts"
+    "verify": "tsx scripts/verify-daily.ts",
+    "kakao:auth": "tsx scripts/kakao-auth.ts"
   },
   "devDependencies": {
     "@types/node": "^20",

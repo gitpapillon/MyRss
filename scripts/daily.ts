@@ -22,8 +22,9 @@ try {
 
 import { gfmToMd2 } from "../src/lib/markdown";
 import { splitMessage } from "../src/lib/splitter";
-import { sendMessage } from "../src/lib/telegram";
+import { getBotUsername, sendMessage } from "../src/lib/telegram";
 import { hasSent, markSent } from "../src/lib/state";
+import { buildKakaoSummary, refreshAccessToken, sendToMe } from "../src/lib/kakao";
 
 const FILES_DIR = "files";
 
@@ -66,6 +67,10 @@ async function main(): Promise<void> {
       console.log(`\n=== CHUNK ${i + 1}/${chunks.length} (${c.length} chars) ===\n`);
       console.log(c);
     });
+    const kakaoPreview = buildKakaoSummary(md, date);
+    console.log(`\n=== KAKAO SUMMARY (${kakaoPreview.length} chars) ===\n`);
+    console.log(kakaoPreview);
+    console.log("[link] 텔레그램에서 전문 보기 → https://t.me/<bot>");
     console.log("\n=== END (dry-run, not sent) ===");
     return;
   }
@@ -75,6 +80,21 @@ async function main(): Promise<void> {
     await sendMessage(chunks[i], { parseMode: "MarkdownV2" });
   }
   markSent(date);
+
+  // 카카오 "나에게 보내기" 요약 — 미설정 시 skip, 실패해도 Telegram 성공에 영향 없음
+  const kakaoTokenPath = process.env.KAKAO_TOKEN_PATH;
+  if (process.env.KAKAO_REST_API_KEY && kakaoTokenPath && existsSync(kakaoTokenPath)) {
+    try {
+      sendToMe(buildKakaoSummary(md, date), refreshAccessToken(), {
+        url: `https://t.me/${getBotUsername()}`,
+        buttonTitle: "텔레그램에서 전문 보기",
+      });
+      console.log("[daily] kakao summary sent.");
+    } catch (e) {
+      console.error("[daily] kakao warn:", e instanceof Error ? e.message : String(e));
+    }
+  }
+
   console.log("[daily] done.");
 }
 
