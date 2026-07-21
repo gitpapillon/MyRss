@@ -141,8 +141,18 @@ const TICKER_HEADER = /^##\s+\S+\s+([A-Z0-9][A-Z0-9.\-]*)\s+[—–-]\s+(.+?)\s*
 // `**$67.62 (+0.4%)** · 진단: **이벤트 드리븐 강세**` ($·₩ 모두)
 const PRICE_LINE = /^\*\*([$₩][\d,.]+)\s*\(([+\-]?[\d.]+%)\)\*\*\s*·\s*진단:\s*\*\*(.+?)\*\*/;
 
-/** 브리핑 MD → 카카오 200자 요약 (순수 함수). date는 "YYYY-MM-DD". */
-export function buildKakaoSummary(briefingMd: string, date: string): string {
+/**
+ * 브리핑 MD → 카카오 200자 요약 (순수 함수). date는 "YYYY-MM-DD".
+ *
+ * linkUrl을 주면 본문 마지막 줄에 평문 URL로 붙인다(카톡 클라이언트가 자동 링크화).
+ * 템플릿 link/button은 도메인을 [앱 > 제품 링크 관리]에 등록해야만 렌더링되므로
+ * 본문 URL이 설정 없이 동작하는 유일한 경로다. URL은 잘림에서 항상 보호된다.
+ */
+export function buildKakaoSummary(
+  briefingMd: string,
+  date: string,
+  linkUrl?: string,
+): string {
   const rows: string[] = [];
   let pendingName: string | null = null;
   for (const raw of briefingMd.split("\n")) {
@@ -168,7 +178,8 @@ export function buildKakaoSummary(briefingMd: string, date: string): string {
   const [, m, d] = date.split("-");
   const header = `📈 ${Number(m)}/${Number(d)}(${weekday}) 브리핑`;
 
-  // 전문 링크는 발송 시 버튼(sendToMe의 link)으로 붙으므로 본문에 안내 문구를 두지 않는다.
-  const out = [header, ...rows].join("\n");
-  return out.length <= MAX_TEXT_LEN ? out : out.slice(0, MAX_TEXT_LEN - 1) + "…";
+  const tail = linkUrl ? `\n전문: ${linkUrl}` : "";
+  const budget = MAX_TEXT_LEN - tail.length;
+  const body = [header, ...rows].join("\n");
+  return (body.length <= budget ? body : body.slice(0, budget - 1) + "…") + tail;
 }
