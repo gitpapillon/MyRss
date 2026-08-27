@@ -20,7 +20,7 @@
   <Actions>
     <Exec>
       <Command>wsl.exe</Command>
-      <Arguments>-d Ubuntu --cd /mnt/d/Project/ai-make/rss-feed -- npm run collect</Arguments>
+      <Arguments>-d Ubuntu --cd /mnt/d/Project/MyRss -- npm run collect</Arguments>
     </Exec>
   </Actions>
 </Task>

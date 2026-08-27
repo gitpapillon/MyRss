@@ -2,23 +2,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-try {
-  const envPath = join(process.cwd(), ".env");
-  const envContent = readFileSync(envPath, "utf-8");
-  envContent.split("\n").forEach((line) => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eq = trimmed.indexOf("=");
-      if (eq > 0) {
-        const k = trimmed.substring(0, eq).trim();
-        const v = trimmed.substring(eq + 1).trim();
-        process.env[k] = v;
-      }
-    }
-  });
-} catch {
-  // .env 없으면 무시
-}
+import { loadEnv } from "../src/lib/env";
+
+loadEnv();
 
 import { gfmToMd2 } from "../src/lib/markdown";
 import { splitMessage } from "../src/lib/splitter";
@@ -94,6 +80,13 @@ async function main(): Promise<void> {
     } catch (e) {
       console.error("[daily] kakao warn:", e instanceof Error ? e.message : String(e));
     }
+  } else {
+    // 조용히 건너뛰면 카카오가 며칠씩 죽어도 로그·verify 어디에도 흔적이 없다.
+    const missing: string[] = [];
+    if (!process.env.KAKAO_REST_API_KEY) missing.push("KAKAO_REST_API_KEY");
+    if (!kakaoTokenPath) missing.push("KAKAO_TOKEN_PATH");
+    else if (!existsSync(kakaoTokenPath)) missing.push(`토큰 파일 없음(${kakaoTokenPath})`);
+    console.log(`[daily] kakao skipped — ${missing.join(", ")}`);
   }
 
   console.log("[daily] done.");

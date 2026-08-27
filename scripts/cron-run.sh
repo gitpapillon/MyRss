@@ -5,7 +5,7 @@
 #   따라서 nvm 을 명시적으로 로드하고, 그래도 Linux node 가 아니면 즉시 실패(로그에 명확히).
 # 사용: cron-run.sh <collect|brief|daily>
 set -o pipefail
-cd /mnt/d/Project/ai-make/rss-feed || exit 1
+cd /mnt/d/Project/MyRss || exit 1
 step="$1"
 [ -z "$step" ] && { echo "usage: cron-run.sh <collect|brief|daily>" >&2; exit 2; }
 mkdir -p logs
@@ -15,6 +15,15 @@ echo "=== [$(ts)] cron-run ${step} start ===" >> "$log"
 
 # brief 단계의 `claude` CLI 는 ~/.local/bin. -l 미사용이라 .profile 이 안 읽히므로 명시 추가.
 export PATH="$HOME/.local/bin:$PATH"
+
+# 시크릿 주입: 이 프로젝트는 dotenv 를 쓰지 않고 process.env 를 직접 읽으므로,
+# Task Scheduler 의 클린 셸에는 토큰이 없다. 중앙 금고(.env)를 여기서 export 한다.
+ENV_FILE=/mnt/d/.secrets/MyRss/.env
+if [ -s "$ENV_FILE" ]; then
+  set -a; . "$ENV_FILE"; set +a
+else
+  echo "[wrap] WARN: ${ENV_FILE} 없음 — 텔레그램/카카오 송신 단계가 실패한다." >> "$log"
+fi
 
 export NVM_DIR="$HOME/.nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then

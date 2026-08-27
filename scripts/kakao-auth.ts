@@ -1,24 +1,9 @@
 #!/usr/bin/env tsx
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+// 시크릿은 중앙 볼트에 있고 프로젝트에는 .env 가 없다. cron-run.sh 래퍼 없이 직접 실행되는
+// 스크립트라 아무도 export 해주지 않으므로, loadEnv 가 볼트를 직접 읽는다.
+import { loadEnv } from "../src/lib/env";
 
-try {
-  const envPath = join(process.cwd(), ".env");
-  const envContent = readFileSync(envPath, "utf-8");
-  envContent.split("\n").forEach((line) => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eq = trimmed.indexOf("=");
-      if (eq > 0) {
-        const k = trimmed.substring(0, eq).trim();
-        const v = trimmed.substring(eq + 1).trim();
-        process.env[k] = v;
-      }
-    }
-  });
-} catch {
-  // .env 없으면 무시
-}
+loadEnv();
 
 import { createServer } from "node:http";
 import { exchangeAuthCode, sendToMe } from "../src/lib/kakao";

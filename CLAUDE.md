@@ -1,6 +1,6 @@
 # Briefing-Telegram Daily Sender
 
-매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. (옵션) 카카오톡 "나에게 보내기"로 200자 요약을 추가 발송한다 — `src/lib/kakao.ts`, daily 단계 통합, 실패해도 Telegram 결과에 영향 없음(best-effort). **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15/06:35 4작업, `scripts/cron-run.sh` 래퍼 경유). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성할 수 있으나 현재 미구현.
+매일 06:00 KST 전후에 `files/news_YYYY-MM-DD.json` 수집 → 헤드리스 claude로 `files/briefing_YYYY-MM-DD.md` 작성 → Telegram MarkdownV2로 변환·송신하는 봇. (옵션) 카카오톡 "나에게 보내기"로 200자 요약을 추가 발송한다 — `src/lib/kakao.ts`, daily 단계 통합, 실패해도 Telegram 결과에 영향 없음(best-effort). **단 daily 는 발송/경고/skip 중 하나를 반드시 로그에 남기고, `verify` 가 그 흔적을 검사해 PASS/FAIL 에 반영한다** — best-effort 라도 조용히 죽으면 안 된다(2026-08 포맷 후 키 누락으로 이틀간 무통보 중단). **활성 트리거는 Windows 작업 스케줄러**(`docs/SCHEDULING.md`, 06:00/06:05/06:15/06:35 4작업, `scripts/cron-run.sh` 래퍼 경유). PC-off가 잦아지면 GHA 등 원격 트리거를 별도 구성할 수 있으나 현재 미구현.
 
 ## 기술 스택
 - TypeScript strict mode (`tsc --noEmit`)
@@ -27,7 +27,9 @@
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot API | `<bot_id>:<bot_secret>` |
 | `TELEGRAM_CHAT_ID` | 수신자 chat_id | 정수 문자열 |
 | `KAKAO_REST_API_KEY` | 카카오 "나에게 보내기" REST API 키 (옵션 — 미설정 시 카카오 발송 skip) | 문자열 |
-| `KAKAO_TOKEN_PATH` | 카카오 refresh token 파일 경로 (시크릿 볼트) | `/mnt/d/_secrets/rss-feed/kakao-token.json` |
+| `KAKAO_TOKEN_PATH` | 카카오 refresh token 파일 경로 (시크릿 볼트) | `/mnt/d/.secrets/rss-feed/kakao-token.json` |
+
+시크릿 실체는 **중앙 볼트 `/mnt/d/.secrets/MyRss/.env`** 에 있고 프로젝트 폴더에는 `.env` 를 두지 않는다(전역 §6). 스케줄러 경로는 `scripts/cron-run.sh` 가 export 하고, 래퍼 없이 직접 실행되는 스크립트(`daily`·`verify`·`kakao:auth`)는 `src/lib/env.ts` 의 `loadEnv()` 가 볼트를 직접 읽는다 — 셸에서 미리 `export` 할 필요가 없다. `ENV_FILE` 로 볼트 경로를 덮어쓸 수 있다.
 
 ## 명령어
 ```bash

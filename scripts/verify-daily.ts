@@ -7,18 +7,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// .env 의 TELEGRAM_* 로드 (daily.ts 와 동일 패턴 — 시크릿은 process.env 경유).
-try {
-  const envContent = readFileSync(join(process.cwd(), ".env"), "utf-8");
-  for (const line of envContent.split("\n")) {
-    const t = line.trim();
-    if (!t || t.startsWith("#")) continue;
-    const eq = t.indexOf("=");
-    if (eq > 0) process.env[t.slice(0, eq).trim()] = t.slice(eq + 1).trim();
-  }
-} catch {
-  /* .env 없으면 무시 */
-}
+// 시크릿 로드 (볼트 → 프로젝트). daily.ts 와 동일 — 시크릿은 process.env 경유.
+import { loadEnv } from "../src/lib/env";
+
+loadEnv();
 
 import { hasSent } from "../src/lib/state";
 import { sendMessage } from "../src/lib/telegram";
@@ -43,6 +35,35 @@ function stepOk(step: string, date: string): { ok: boolean; detail: string } {
   const last = lines[lines.length - 1];
   const ok = last.includes("exit 0 ===");
   return { ok, detail: ok ? "exit 0" : last.trim().slice(-40) };
+}
+
+// 오늘 daily 실행 구간(마지막 'cron-run daily start' 이후)에서 카카오 발송 흔적을 찾는다.
+// daily.ts 가 발송/경고/skip 중 하나를 반드시 남기므로, 아무것도 없으면 구버전이거나 비정상.
+function kakaoStatus(date: string): { ok: boolean; detail: string } {
+  const path = join(process.cwd(), "logs", "daily.log");
+  if (!existsSync(path)) return { ok: false, detail: "daily 로그 없음" };
+  const lines = readFileSync(path, "utf-8").split("\n");
+  let start = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].includes(`[${date}`) && lines[i].includes("cron-run daily start")) {
+      start = i;
+      break;
+    }
+  }
+  if (start < 0) return { ok: false, detail: "오늘 실행 기록 없음" };
+
+  const seg = lines.slice(start);
+  const find = (needle: string): string | undefined => seg.find((l) => l.includes(needle));
+
+  if (find("[daily] kakao summary sent")) return { ok: true, detail: "발송됨" };
+
+  const warn = find("[daily] kakao warn:");
+  if (warn) return { ok: false, detail: warn.split("kakao warn:")[1]?.trim().slice(0, 60) ?? "발송 실패" };
+
+  const skip = find("[daily] kakao skipped");
+  if (skip) return { ok: false, detail: skip.split("kakao skipped —")[1]?.trim().slice(0, 60) ?? "미설정" };
+
+  return { ok: false, detail: "발송 흔적 없음" };
 }
 
 async function main(): Promise<void> {
@@ -72,6 +93,8 @@ async function main(): Promise<void> {
     ok: sentOk,
     detail: sentOk ? `${date} 기록됨` : "미기록(소실 의심 — P1b)",
   });
+
+  results.push({ name: "kakao", ...kakaoStatus(date) });
 
   const allPass = results.every((r) => r.ok);
   const head = allPass
